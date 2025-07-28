@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+# (1) Load NVM and switch Node version
+source ~/.nvm/nvm.sh
+nvm use --delete-prefix 22.14.0 --silent
+
+
+# (2) Load environment variables
+if [ -f .env.production ]; then
+  source .env.production
+fi
+
+echo "🚀 Deploying nzhousingstats… $(date)"
+
+# (3) Pull latest
+echo "⬇️  git pull origin main"
+git pull origin main
+
+# (4) Install dependencies
+echo "📦 pnpm install"
+pnpm install --frozen-lockfile
+
+# (5) Build
+echo "🔨 pnpm build"
+pnpm build
+
+# (6) Reload via PM2 (zero‑downtime)
+echo "🔄 pm2 reload nzhousingstats"
+pm2 reload ecosystem.config.js --only nzhousingstats \
+  || pm2 start ecosystem.config.js --only nzhousingstats
+
+# (7) Show status
+pm2 status nzhousingstats
+
+# (8) (Optional) Purge Cloudflare cache
+if [ -n "$CF_ZONE_ID" ] && [ -n "$CF_API_TOKEN" ]; then
+  echo "🌐 Purging Cloudflare cache…"
+  curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+    -H "Authorization: Bearer $CF_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    --data '{"purge_everything":true}'
+  echo "✅ Cloudflare cache purged"
+fi
+
+echo "✅ Deployment complete: $(date)"
