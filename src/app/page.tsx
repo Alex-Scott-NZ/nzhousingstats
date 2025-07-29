@@ -1,13 +1,13 @@
-// src/app/page.tsx
+// src\app\page.tsx
 import { Suspense } from 'react';
 import { getTotalsByLocationType, getLocationsWithFilters, getLatestSnapshots } from '../../lib/data-collection';
 import PropertyDashboard from './components/PropertyDashboard';
 
 export default async function HomePage() {
-  console.log('🏠 Loading all data...');
+  console.log('🏠 Loading houses data (buy & rent only)...');
   
-  // Get ALL data for all listing types and location types
-  const [housesToBuyData, housesToRentData, commercialData, snapshots] = await Promise.all([
+  // Get data for just HOUSES_TO_BUY and HOUSES_TO_RENT (removed commercial)
+  const [housesToBuyData, housesToRentData, snapshots] = await Promise.all([
     // Houses to Buy - get all levels
     Promise.all([
       getTotalsByLocationType('HOUSES_TO_BUY'),
@@ -22,17 +22,10 @@ export default async function HomePage() {
       getLocationsWithFilters({ listingType: 'HOUSES_TO_RENT', locationType: 'district', limit: 500 }),
       getLocationsWithFilters({ listingType: 'HOUSES_TO_RENT', locationType: 'suburb', limit: 1000 })
     ]),
-    // Commercial - get all levels
-    Promise.all([
-      getTotalsByLocationType('COMMERCIAL_FOR_SALE'),
-      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'region', limit: 100 }),
-      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'district', limit: 500 }),
-      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'suburb', limit: 1000 })
-    ]),
     getLatestSnapshots()
   ]);
 
-  // Structure the data for the component
+  // Structure the data for the component (no commercial)
   const allData = {
     HOUSES_TO_BUY: {
       totals: housesToBuyData[0],
@@ -45,19 +38,12 @@ export default async function HomePage() {
       regions: housesToRentData[1],
       districts: housesToRentData[2],
       suburbs: housesToRentData[3]
-    },
-    COMMERCIAL_FOR_SALE: {
-      totals: commercialData[0],
-      regions: commercialData[1],
-      districts: commercialData[2],
-      suburbs: commercialData[3]
     }
   };
 
-  console.log('📊 Data loaded:', {
+  console.log('📊 Houses data loaded:', {
     housesToBuy: allData.HOUSES_TO_BUY.totals?.total || 0,
-    housesToRent: allData.HOUSES_TO_RENT.totals?.total || 0, 
-    commercial: allData.COMMERCIAL_FOR_SALE.totals?.total || 0,
+    housesToRent: allData.HOUSES_TO_RENT.totals?.total || 0,
     totalRegions: allData.HOUSES_TO_BUY.regions?.length || 0,
     totalDistricts: allData.HOUSES_TO_BUY.districts?.length || 0,
     totalSuburbs: allData.HOUSES_TO_BUY.suburbs?.length || 0
