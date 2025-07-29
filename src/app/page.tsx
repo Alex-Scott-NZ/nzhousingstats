@@ -1,104 +1,89 @@
-// src\app\page.tsx
-import Image from "next/image";
+// src/app/page.tsx
+import { Suspense } from 'react';
+import { getTotalsByLocationType, getLocationsWithFilters, getLatestSnapshots } from '../../lib/data-collection';
+import PropertyDashboard from './components/PropertyDashboard';
 
-export default function Home() {
+export default async function HomePage() {
+  console.log('🏠 Loading all data...');
+  
+  // Get ALL data for all listing types and location types
+  const [housesToBuyData, housesToRentData, commercialData, snapshots] = await Promise.all([
+    // Houses to Buy - get all levels
+    Promise.all([
+      getTotalsByLocationType('HOUSES_TO_BUY'),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_BUY', locationType: 'region', limit: 100 }),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_BUY', locationType: 'district', limit: 500 }),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_BUY', locationType: 'suburb', limit: 1000 })
+    ]),
+    // Houses to Rent - get all levels  
+    Promise.all([
+      getTotalsByLocationType('HOUSES_TO_RENT'),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_RENT', locationType: 'region', limit: 100 }),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_RENT', locationType: 'district', limit: 500 }),
+      getLocationsWithFilters({ listingType: 'HOUSES_TO_RENT', locationType: 'suburb', limit: 1000 })
+    ]),
+    // Commercial - get all levels
+    Promise.all([
+      getTotalsByLocationType('COMMERCIAL_FOR_SALE'),
+      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'region', limit: 100 }),
+      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'district', limit: 500 }),
+      getLocationsWithFilters({ listingType: 'COMMERCIAL_FOR_SALE', locationType: 'suburb', limit: 1000 })
+    ]),
+    getLatestSnapshots()
+  ]);
+
+  // Structure the data for the component
+  const allData = {
+    HOUSES_TO_BUY: {
+      totals: housesToBuyData[0],
+      regions: housesToBuyData[1],
+      districts: housesToBuyData[2], 
+      suburbs: housesToBuyData[3]
+    },
+    HOUSES_TO_RENT: {
+      totals: housesToRentData[0],
+      regions: housesToRentData[1],
+      districts: housesToRentData[2],
+      suburbs: housesToRentData[3]
+    },
+    COMMERCIAL_FOR_SALE: {
+      totals: commercialData[0],
+      regions: commercialData[1],
+      districts: commercialData[2],
+      suburbs: commercialData[3]
+    }
+  };
+
+  console.log('📊 Data loaded:', {
+    housesToBuy: allData.HOUSES_TO_BUY.totals?.total || 0,
+    housesToRent: allData.HOUSES_TO_RENT.totals?.total || 0, 
+    commercial: allData.COMMERCIAL_FOR_SALE.totals?.total || 0,
+    totalRegions: allData.HOUSES_TO_BUY.regions?.length || 0,
+    totalDistricts: allData.HOUSES_TO_BUY.districts?.length || 0,
+    totalSuburbs: allData.HOUSES_TO_BUY.suburbs?.length || 0
+  });
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changey wangey wage instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4">
+          <h1 className="text-3xl font-bold text-gray-900">
+            🏠 NZ Housing Statistics
+          </h1>
+          <p className="text-gray-600">
+            Real-time property market data across New Zealand
+          </p>
         </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto py-6 px-4">
+        <Suspense fallback={<div>Loading...</div>}>
+          <PropertyDashboard 
+            allData={allData}
+            snapshots={snapshots}
+          />
+        </Suspense>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
