@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// scripts\test-api.js
 
 // Load environment variables
 import { config } from 'dotenv';

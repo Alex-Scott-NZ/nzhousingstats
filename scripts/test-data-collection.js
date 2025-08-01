@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// scripts\test-data-collection.js
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });

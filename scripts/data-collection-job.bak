@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-// scripts\data-collection-job.js
+// scripts\data-collection-job.bak
 
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 import cron from 'node-cron';
-import { collectPropertyData } from '../lib/data-collection.js';
+import { collectPropertyData } from '../lib/data-collection.ts';
 
 console.log('🏠 NZ Housing Stats Data Collection Service Starting...');
-console.log(`⏰ Will collect data at 11:59 PM daily`); // ← Change 1: 11:50
+console.log(`⏰ Will collect data every 15 minutes`);
 console.log(`🕐 Started at: ${new Date().toISOString()}`);
 
-// Run at 11:50 PM every day: '50 23 * * *'
-cron.schedule('06 00 * * *', async () => {  // ← Change 2: '50 23 * * *'
+// Run every 15 minutes: '*/15 * * * *'
+// For production, you might want: '0 */6 * * *' (every 6 hours)
+cron.schedule('*/15 * * * *', async () => {
   const timestamp = new Date().toISOString();
   console.log(`\n🔄 Starting data collection at ${timestamp}`);
   
@@ -23,6 +24,14 @@ cron.schedule('06 00 * * *', async () => {  // ← Change 2: '50 23 * * *'
       console.log(`✅ HOUSES_TO_BUY: ${buyResult.totalNzListings.toLocaleString()} listings, ${buyResult.totalRecords.toLocaleString()} records stored`);
     } else {
       console.error(`❌ HOUSES_TO_BUY failed: ${buyResult.error}`);
+    }
+
+    // Collect rentals (optional - you might want less frequent)
+    const rentResult = await collectPropertyData('HOUSES_TO_RENT');
+    if (rentResult.success) {
+      console.log(`✅ HOUSES_TO_RENT: ${rentResult.totalNzListings.toLocaleString()} listings, ${rentResult.totalRecords.toLocaleString()} records stored`);
+    } else {
+      console.error(`❌ HOUSES_TO_RENT failed: ${rentResult.error}`);
     }
 
     console.log(`🎉 Data collection completed at ${new Date().toISOString()}`);

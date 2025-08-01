@@ -1,4 +1,4 @@
-// lib/types/trademe.js
+// lib\types\trademe.ts
 
 /**
  * TradeMe API Response Types - Simplified for Weekly Data Collection
@@ -30,7 +30,7 @@ export interface Region {
   LocalityId: number;
   Name: string;
   Districts: District[];
-  Count?: number; // Optional - some regions may have no listings
+  // Count?: number; // This is unrelaible and doesn't match the totals from district and suburb
 }
 
 /**
