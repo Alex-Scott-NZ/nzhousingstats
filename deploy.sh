@@ -34,12 +34,6 @@ pnpm install --frozen-lockfile
 echo "🔨 pnpm build"
 pnpm build
 
-# Update ecosystem config to ES module format (one-time fix)
-if grep -q "module.exports" ecosystem.config.cjs; then
-  echo "🔧 Converting ecosystem.config.cjs to ES module..."
-  sed -i 's/module.exports = {/export default {/' ecosystem.config.cjs
-fi
-
 # Reload via PM2
 echo "🔄 pm2 reload nzhousingstats"
 pm2 reload ecosystem.config.cjs --only nzhousingstats \
