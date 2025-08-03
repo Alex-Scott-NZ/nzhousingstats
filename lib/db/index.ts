@@ -1,4 +1,4 @@
-// lib/db/index.ts
+// lib\db\index.ts
 
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';

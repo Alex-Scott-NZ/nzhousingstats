@@ -530,24 +530,92 @@ export async function getLocationsWithFilters(filters: {
 }
 
 /**
- * Get historical snapshots for trend analysis
+ * Get historical snapshots for trend analysis - FIXED VERSION
  */
-export async function getHistoricalSnapshots(listingType: ListingType, limit = 28) {
+export async function getHistoricalSnapshots(listingType: ListingType, limit?: number) {
   const results = await db.all(sql`
-    SELECT 
-      s.id,
-      s.snapshot_date,
-      s.collected_at,
-      lt.code as listing_type,
-      SUM(sl.listing_count) as total_listings
-    FROM snapshots s
-    JOIN suburb_listings sl ON s.id = sl.snapshot_id
-    JOIN listing_types lt ON sl.listing_type_id = lt.id
-    WHERE lt.code = ${listingType}
-    GROUP BY s.id, s.snapshot_date, lt.code
-    ORDER BY s.snapshot_date DESC
-    LIMIT ${limit}
+    WITH historical_data AS (
+      -- National totals (for main chart when no region selected)
+      SELECT 
+        s.id,
+        s.snapshot_date,
+        s.collected_at,
+        lt.code as listing_type,
+        NULL as region_id,
+        NULL as district_id,
+        NULL as suburb_id,
+        SUM(sl.listing_count) as total_listings
+      FROM snapshots s
+      JOIN suburb_listings sl ON s.id = sl.snapshot_id
+      JOIN listing_types lt ON sl.listing_type_id = lt.id
+      WHERE lt.code = ${listingType}
+      GROUP BY s.id, s.snapshot_date, s.collected_at, lt.code
+      
+      UNION ALL
+      
+      -- Regional totals (for when region is selected)
+      SELECT 
+        s.id,
+        s.snapshot_date,
+        s.collected_at,
+        lt.code as listing_type,
+        r.id as region_id,
+        NULL as district_id,
+        NULL as suburb_id,
+        SUM(sl.listing_count) as total_listings
+      FROM snapshots s
+      JOIN suburb_listings sl ON s.id = sl.snapshot_id
+      JOIN listing_types lt ON sl.listing_type_id = lt.id
+      JOIN suburbs sub ON sl.suburb_id = sub.id
+      JOIN regions r ON sub.region_id = r.id
+      WHERE lt.code = ${listingType}
+      GROUP BY s.id, s.snapshot_date, s.collected_at, lt.code, r.id
+      
+      UNION ALL
+      
+      -- District totals (for when district is selected)
+      SELECT 
+        s.id,
+        s.snapshot_date,
+        s.collected_at,
+        lt.code as listing_type,
+        r.id as region_id,
+        d.id as district_id,
+        NULL as suburb_id,
+        SUM(sl.listing_count) as total_listings
+      FROM snapshots s
+      JOIN suburb_listings sl ON s.id = sl.snapshot_id
+      JOIN listing_types lt ON sl.listing_type_id = lt.id
+      JOIN suburbs sub ON sl.suburb_id = sub.id
+      JOIN districts d ON sub.district_id = d.id
+      JOIN regions r ON sub.region_id = r.id
+      WHERE lt.code = ${listingType}
+      GROUP BY s.id, s.snapshot_date, s.collected_at, lt.code, r.id, d.id
+      
+      UNION ALL
+      
+      -- 🆕 Individual suburb data (for when suburb is selected)
+      SELECT 
+        s.id,
+        s.snapshot_date,
+        s.collected_at,
+        lt.code as listing_type,
+        r.id as region_id,
+        d.id as district_id,
+        sub.id as suburb_id,
+        sl.listing_count as total_listings
+      FROM snapshots s
+      JOIN suburb_listings sl ON s.id = sl.snapshot_id
+      JOIN listing_types lt ON sl.listing_type_id = lt.id
+      JOIN suburbs sub ON sl.suburb_id = sub.id
+      JOIN districts d ON sub.district_id = d.id
+      JOIN regions r ON sub.region_id = r.id
+      WHERE lt.code = ${listingType}
+    )
+    SELECT * FROM historical_data
+    ORDER BY snapshot_date ASC
+    ${limit ? sql`LIMIT ${limit}` : sql``}
   `) as any[];
 
-  return results.reverse(); // Oldest first for charting
+  return results;
 }
