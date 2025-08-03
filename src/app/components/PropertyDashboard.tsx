@@ -797,7 +797,7 @@ export default function PropertyDashboard({
       <div className={styles["sketch-box"]}>
         <div className="p-8 text-center border-b-2 border-dashed border-gray-800">
           <h1 className={`text-4xl font-bold mb-2 text-gray-800 ${styles["yellow-highlight"]} relative`}>
-            Property Listings Tracker ✏️
+            Property Listing Tracker ✏️
           </h1>
           <p className="text-lg font-normal mt-2 text-gray-500">
             Real-time insights into New Zealand's property market trends
