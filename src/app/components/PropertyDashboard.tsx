@@ -1,10 +1,10 @@
-// src\app\components\PropertyDashboard.tsx
+// src/app/components/PropertyDashboard.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -77,7 +77,7 @@ interface DropdownOption {
 interface PropertyDashboardProps {
   allData: AllData;
   snapshots: DatabaseWeeklySnapshot[];
-  historicalData: HistoricalSnapshot[]; // Add this
+  historicalData: HistoricalSnapshot[];
 }
 
 type SortColumn = "name" | "listingCount";
@@ -97,7 +97,7 @@ export default function PropertyDashboard({
   );
   const [sortBy, setSortBy] = useState<SortColumn>("listingCount");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const [showAll, setShowAll] = useState<boolean>(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
   // Get current listing data
   const currentListingData: ListingTypeData = allData[selectedListingType];
@@ -115,6 +115,11 @@ export default function PropertyDashboard({
     totalSuburbs: currentListingData?.suburbs?.length || 0,
     historicalDataPoints: historicalData.length,
   });
+
+  // Trigger animation restart when data changes
+  useEffect(() => {
+    setAnimationKey(prev => prev + 1);
+  }, [selectedListingType, selectedRegionId, selectedDistrictId, sortBy, sortOrder]);
 
   // Prepare trend data
   const trendData = useMemo(() => {
@@ -205,6 +210,53 @@ export default function PropertyDashboard({
     }
   }, [currentListingData, selectedRegionId, selectedDistrictId]);
 
+  // Get selected region/district names for breadcrumb display
+  const selectedRegionName: string | undefined = selectedRegionId
+    ? availableRegions.find((r: DropdownOption) => r.id === selectedRegionId)
+        ?.name
+    : undefined;
+  const selectedDistrictName: string | undefined = selectedDistrictId
+    ? availableDistricts.find(
+        (d: DropdownOption) => d.id === selectedDistrictId
+      )?.name
+    : undefined;
+
+  // Calculate filtered totals based on current selection
+  const filteredTotals = useMemo(() => {
+    if (!currentListingData) return null;
+
+    let relevantData: DatabaseLocationSnapshot[] = [];
+    let locationName = "New Zealand";
+
+    if (selectedDistrictId) {
+      // Show totals for selected district (sum of all suburbs in that district)
+      relevantData = currentListingData.suburbs?.filter(
+        (suburb: DatabaseLocationSnapshot) => suburb.districtId === selectedDistrictId
+      ) || [];
+      locationName = selectedDistrictName || "Selected District";
+    } else if (selectedRegionId) {
+      // Show totals for selected region (sum of all districts in that region)
+      relevantData = currentListingData.districts?.filter(
+        (district: DatabaseLocationSnapshot) => district.regionId === selectedRegionId
+      ) || [];
+      locationName = selectedRegionName || "Selected Region";
+    } else {
+      // Show country totals
+      relevantData = currentListingData.regions || [];
+      locationName = "New Zealand";
+    }
+
+    const totalListings = relevantData.reduce((sum, item) => sum + (item.listingCount || 0), 0);
+    const itemCount = relevantData.length;
+
+    return {
+      total: totalListings,
+      count: itemCount,
+      locationName: locationName,
+      level: selectedDistrictId ? "suburbs" : selectedRegionId ? "districts" : "regions"
+    };
+  }, [currentListingData, selectedRegionId, selectedDistrictId, selectedRegionName, selectedDistrictName]);
+
   // Handle region selection
   const handleRegionChange = (regionId: string): void => {
     const id = regionId ? Number(regionId) : null;
@@ -236,6 +288,21 @@ export default function PropertyDashboard({
     );
   };
 
+  // Handle clicking on region/district names in the table
+  const handleLocationClick = (item: DatabaseLocationSnapshot): void => {
+    if (currentLevel === "region") {
+      // Clicking on a region - drill down to show districts
+      setSelectedRegionId(item.regionId);
+      setSelectedDistrictId(null);
+      console.log("🔽 Drilling down to region:", item.regionName, "ID:", item.regionId);
+    } else if (currentLevel === "district") {
+      // Clicking on a district - drill down to show suburbs
+      setSelectedDistrictId(item.districtId);
+      console.log("🔽 Drilling down to district:", item.districtName, "ID:", item.districtId);
+    }
+    // For suburbs, we don't drill down further
+  };
+
   // Handle column header clicks for sorting
   const handleSort = (column: SortColumn): void => {
     if (sortBy === column) {
@@ -250,7 +317,7 @@ export default function PropertyDashboard({
     });
   };
 
-  // Sort and limit data
+  // Sort data - REMOVED LIMIT, NOW SHOWS ALL DATA
   const displayData = useMemo((): DatabaseLocationSnapshot[] => {
     const sorted = [...currentDisplayData].sort(
       (a: DatabaseLocationSnapshot, b: DatabaseLocationSnapshot) => {
@@ -276,8 +343,9 @@ export default function PropertyDashboard({
       }
     );
 
-    return showAll ? sorted : sorted.slice(0, 10);
-  }, [currentDisplayData, sortBy, sortOrder, showAll]);
+    // Return all sorted data - no more limiting to 10
+    return sorted;
+  }, [currentDisplayData, sortBy, sortOrder]);
 
   // Determine what we're showing
   const getCurrentLevel = (): LocationLevel => {
@@ -290,29 +358,17 @@ export default function PropertyDashboard({
   const levelName: string =
     currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1);
 
-  // Get current location name for display - FIXED VERSION
+  // Get current location name for display
   const getCurrentLocationName = (item: DatabaseLocationSnapshot): string => {
-    // Show the appropriate name based on what level we're currently viewing
     if (currentLevel === "region") {
       return item.regionName || "Unknown Region";
     } else if (currentLevel === "district") {
-      return item.districtName || "Unknown District"; // Show district name when viewing districts
+      return item.districtName || "Unknown District";
     } else if (currentLevel === "suburb") {
-      return item.suburbName || "Unknown Suburb"; // Show suburb name when viewing suburbs
+      return item.suburbName || "Unknown Suburb";
     }
     return "Unknown";
   };
-
-  // Get selected region/district names for breadcrumb display
-  const selectedRegionName: string | undefined = selectedRegionId
-    ? availableRegions.find((r: DropdownOption) => r.id === selectedRegionId)
-        ?.name
-    : undefined;
-  const selectedDistrictName: string | undefined = selectedDistrictId
-    ? availableDistricts.find(
-        (d: DropdownOption) => d.id === selectedDistrictId
-      )?.name
-    : undefined;
 
   // Sort indicator component
   const SortIndicator = ({ column }: { column: SortColumn }) => {
@@ -334,61 +390,307 @@ export default function PropertyDashboard({
   }
 
   return (
-    <div className="space-y-6">
-      {/* NEW: Market Trends Section - UPDATED WITH RECHARTS */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl shadow-lg">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🏠 NZ Housing Market Trends
-          </h2>
-          <p className="text-gray-600">
-            Real-time property listings across New Zealand
+    <div className="max-w-7xl mx-auto p-5 space-y-5 font-['Kalam',cursive] bg-[#fafafa] min-h-screen bg-[linear-gradient(#e8e8e8_1px,transparent_1px),linear-gradient(90deg,#e8e8e8_1px,transparent_1px)] bg-[20px_20px]">
+      <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+        
+        .sketch-box {
+          background: white;
+          border: 3px solid #333;
+          border-radius: 0;
+          box-shadow: 3px 3px 0px #333;
+          position: relative;
+          margin-bottom: 20px;
+        }
+
+        .sketch-box:before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          border: 2px dashed #666;
+          pointer-events: none;
+          opacity: 0.3;
+        }
+
+        .yellow-highlight {
+          position: relative;
+          display: inline-block;
+        }
+
+        .yellow-highlight:before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: -8px;
+          right: -12px;
+          height: 20px;
+          background: linear-gradient(45deg, #FFD700 0%, #FFED4A 25%, #FFD700 50%, #FFED4A 75%, #FFD700 100%);
+          transform: translateY(-50%) rotate(-1deg);
+          z-index: -1;
+          opacity: 0.7;
+          border-radius: 3px;
+        }
+
+        .status-dot {
+          width: 10px;
+          height: 10px;
+          background: #10B981;
+          border: 2px solid #333;
+          border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { 
+            opacity: 1; 
+            transform: scale(1);
+          }
+          50% { 
+            opacity: 0.7;
+            transform: scale(1.1);
+          }
+        }
+
+        .time-btn {
+          padding: 8px 16px;
+          border: 1px solid #333;
+          background: white;
+          cursor: pointer;
+          font-family: 'Kalam', cursive;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          color: #333;
+          position: relative;
+        }
+
+        .time-btn.active {
+          background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 2px 2px 0px #1E40AF;
+        }
+
+        .time-btn:hover:not(.active) {
+          background: #DBEAFE;
+          transform: translateY(-1px);
+        }
+
+        .stat-change {
+          font-size: 16px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border: 1px solid #333;
+          transition: all 0.3s ease;
+        }
+
+        .stat-change.positive {
+          color: white;
+          background: linear-gradient(45deg, #10B981 0%, #059669 50%, #10B981 100%);
+        }
+
+        .stat-change.negative {
+          color: white;
+          background: linear-gradient(45deg, #EF4444 0%, #DC2626 50%, #EF4444 100%);
+        }
+
+        .cascading-row-${animationKey} {
+          opacity: 0;
+          transform: translateX(-30px) translateY(20px) scale(0.95);
+          animation: cascadeIn-${animationKey} 0.8s ease-out forwards;
+        }
+
+        @keyframes cascadeIn-${animationKey} {
+          0% {
+            opacity: 0;
+            transform: translateX(-30px) translateY(20px) scale(0.95);
+          }
+          60% {
+            opacity: 0.8;
+            transform: translateX(5px) translateY(-2px) scale(1.02);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0) translateY(0) scale(1);
+          }
+        }
+
+        .table-row:hover {
+          background: #f9f9f9;
+          transform: translateX(8px) scale(1.02);
+          box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 10;
+        }
+
+        .clickable-location {
+          color: #333;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: underline;
+          text-decoration-style: dotted;
+        }
+
+        .clickable-location:hover {
+          color: #000;
+          text-decoration-style: solid;
+          transform: translateX(3px);
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="sketch-box">
+        <div className="p-8 text-center border-b-2 border-dashed border-gray-800">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2 yellow-highlight relative">
+            Property Listings Tracker ✏️
+          </h1>
+          <p className="text-gray-600 text-lg font-normal mt-2">
+            Real-time insights into New Zealand's property market trends
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Current Total Card - REPLACED TREMOR CARD */}
-          <div className="bg-white/80 backdrop-blur rounded-lg p-6 shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-3xl font-bold text-gray-900">
-                  {totals?.total.toLocaleString()}
-                </div>
-                <p className="text-sm text-gray-600 mt-1">Total Listings</p>
+      {/* Breadcrumb */}
+      <div className="sketch-box">
+        <div className="p-4 text-base bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.05)_2px,rgba(0,0,0,0.05)_4px)]">
+          <span
+            className="text-gray-800 underline decoration-wavy cursor-pointer font-semibold hover:text-black hover:shadow-[1px_1px_0px_#ddd] transition-all"
+            onClick={() => {
+              setSelectedRegionId(null);
+              setSelectedDistrictId(null);
+            }}
+          >
+            🇳🇿 New Zealand
+          </span>
+          {selectedRegionName && (
+            <>
+              <span className="text-gray-600 mx-3">›</span>
+              <span
+                className="text-gray-800 underline decoration-wavy cursor-pointer font-semibold hover:text-black"
+                onClick={() => setSelectedDistrictId(null)}
+              >
+                {selectedRegionName}
+              </span>
+            </>
+          )}
+          {selectedDistrictName && (
+            <>
+              <span className="text-gray-600 mx-3">›</span>
+              <span className="text-gray-800 font-semibold">{selectedDistrictName}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Summary Card */}
+      <div className="sketch-box">
+        <div className="p-10">
+          <div className="flex justify-between items-start mb-8 border-b-2 border-gray-800 pb-5">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2 yellow-highlight relative">
+                📊 {selectedDistrictName ? `${selectedDistrictName} Suburbs` : selectedRegionName ? `${selectedRegionName} Districts` : 'New Zealand Overview'}
+              </h2>
+              <div className="text-gray-600 text-sm flex items-center gap-2 border border-dashed border-gray-400 p-2 bg-gray-50">
+                <div className="status-dot"></div>
+                <span>Last updated: <span>{new Date(totals.lastUpdated).toLocaleString('en-NZ', { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric',
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}</span></span>
               </div>
-              {changeMetrics && (
-                <div
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    changeMetrics.deltaType === "increase"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {changeMetrics.change > 0 ? "+" : ""}
-                  {changeMetrics.change.toLocaleString()} (
-                  {changeMetrics.changePercent.toFixed(1)}%)
-                </div>
-              )}
+            </div>
+            <div className="flex gap-1 border-2 border-gray-800 p-1">
+              <button
+                className={`time-btn ${selectedListingType === 'HOUSES_TO_BUY' ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedListingType('HOUSES_TO_BUY');
+                  setSelectedRegionId(null);
+                  setSelectedDistrictId(null);
+                }}
+              >
+                🏠 Buy
+              </button>
+              <button
+                className={`time-btn ${selectedListingType === 'HOUSES_TO_RENT' ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedListingType('HOUSES_TO_RENT');
+                  setSelectedRegionId(null);
+                  setSelectedDistrictId(null);
+                }}
+              >
+                🏡 Rent
+              </button>
             </div>
           </div>
 
-          {/* Trend Chart - UPDATED TO BAR CHART */}
-          <div className="lg:col-span-2 bg-white/80 backdrop-blur rounded-lg p-6 shadow">
-            <p className="text-sm text-gray-600 mb-4 font-medium">
-              Listings Over Time
-            </p>
+          {/* Summary Stats - NOW DYNAMIC BASED ON SELECTION */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-1 hover:rotate-[-1deg] hover:shadow-[4px_4px_0px_#333] relative shadow-[2px_2px_0px_#333]">
+              <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
+              <div className="text-4xl font-bold text-gray-800 mb-2 underline decoration-double">
+                {filteredTotals?.total.toLocaleString() || totals.total.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600 mb-3 font-semibold uppercase tracking-wide">
+                {filteredTotals ? `${filteredTotals.locationName} Listings` : 'Total Listings'}
+              </div>
+              <div className="stat-change positive">
+                <span>↗</span>
+                <span>
+                  {filteredTotals ? `Active in ${filteredTotals.locationName}` : 'Current active listings'}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-1 hover:rotate-[-1deg] hover:shadow-[4px_4px_0px_#333] relative shadow-[2px_2px_0px_#333]">
+              <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
+              <div className="text-4xl font-bold text-gray-800 mb-2 underline decoration-double">
+                {displayData.length}
+              </div>
+              <div className="text-sm text-gray-600 mb-3 font-semibold uppercase tracking-wide">Showing</div>
+              <div className="stat-change positive">
+                <span>↗</span>
+                <span>{levelName}s visible</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-1 hover:rotate-[-1deg] hover:shadow-[4px_4px_0px_#333] relative shadow-[2px_2px_0px_#333]">
+              <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
+              <div className="text-4xl font-bold text-gray-800 mb-2 underline decoration-double">
+                {changeMetrics ? (changeMetrics.change > 0 ? '+' : '') + changeMetrics.change.toLocaleString() : 'N/A'}
+              </div>
+              <div className="text-sm text-gray-600 mb-3 font-semibold uppercase tracking-wide">Trend Change</div>
+              <div className={`stat-change ${changeMetrics?.deltaType === 'increase' ? 'positive' : 'negative'}`}>
+                <span>{changeMetrics?.deltaType === 'increase' ? '↗' : '↘'}</span>
+                <span>{changeMetrics ? `${changeMetrics.changePercent.toFixed(1)}%` : 'No data'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart Container - LINE CHART */}
+          <div className="bg-white border-2 border-gray-800 p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
+            <div className="absolute -top-4 left-5 bg-white px-2 font-bold text-gray-800 border-2 border-gray-800">
+              CHART 📈
+            </div>
             {trendData.length > 1 ? (
-              <ResponsiveContainer width="100%" height={128}>
-                <BarChart
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart
                   data={trendData}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
+                    tick={{ fontSize: 12, fill: "#666", fontFamily: 'Kalam' }}
                   />
                   <YAxis hide />
                   <Tooltip
@@ -396,23 +698,27 @@ export default function PropertyDashboard({
                       value.toLocaleString(),
                       "Listings",
                     ]}
-                    labelStyle={{ color: "#374151" }}
+                    labelStyle={{ color: "#333", fontFamily: 'Kalam' }}
                     contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
+                      backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      border: "2px solid #333",
+                      borderRadius: "0px",
                       fontSize: "14px",
+                      fontFamily: 'Kalam',
                     }}
                   />
-                  <Bar
+                  <Line
+                    type="monotone"
                     dataKey="listings"
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
+                    stroke="#333"
+                    strokeWidth={3}
+                    dot={{ fill: "#333", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
                   />
-                </BarChart>
+                </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-32 flex items-center justify-center text-gray-500">
+              <div className="h-48 flex items-center justify-center text-gray-500">
                 <div className="text-center">
                   <div className="text-2xl mb-2">📊</div>
                   <p className="text-sm">Collecting trend data...</p>
@@ -424,179 +730,101 @@ export default function PropertyDashboard({
             )}
           </div>
         </div>
-
-        {/* Data Points Summary */}
-        {trendData.length > 0 && (
-          <div className="mt-4 p-4 bg-white/60 rounded-lg">
-            <p className="text-sm text-gray-600">
-              📅 Data Points: {trendData.length} snapshots
-              {trendData.length > 1 && (
-                <span>
-                  • Range: {trendData[0].fullDate} to{" "}
-                  {trendData[trendData.length - 1].fullDate}
-                </span>
-              )}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Total Listings</h3>
-          <p className="text-3xl font-bold text-blue-600">
-            {totals.total.toLocaleString()}
-          </p>
-          <p className="text-sm text-gray-500">
-            {selectedListingType === "HOUSES_TO_BUY"
-              ? "houses for sale"
-              : "houses for rent"}
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Current View</h3>
-          <p className="text-3xl font-bold text-green-600">
-            {displayData.length}
-          </p>
-          <p className="text-sm text-gray-500">{levelName}s showing</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Available</h3>
-          <p className="text-3xl font-bold text-orange-600">
-            {currentDisplayData.length}
-          </p>
-          <p className="text-sm text-gray-500">Total {levelName}s</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">All Suburbs</h3>
-          <p className="text-3xl font-bold text-purple-600">{totals.suburbs}</p>
-          <p className="text-sm text-gray-500">Individual suburbs</p>
-        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+      <div className="sketch-box">
+        <div className="p-6">
+          <h3 className="text-2xl font-bold text-gray-800 mb-4 yellow-highlight relative">
+            📋 Filters
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          {/* Listing Type - simplified to just Buy/Rent */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Property Type
-            </label>
-            <select
-              value={selectedListingType}
-              onChange={(e) => {
-                setSelectedListingType(e.target.value as HouseListingType);
-                setSelectedRegionId(null);
-                setSelectedDistrictId(null);
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="HOUSES_TO_BUY">🏠 Houses to Buy</option>
-              <option value="HOUSES_TO_RENT">🏡 Houses to Rent</option>
-            </select>
-          </div>
-
-          {/* Region Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Region
-            </label>
-            <select
-              value={selectedRegionId || ""}
-              onChange={(e) => handleRegionChange(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="">All Regions ({availableRegions.length})</option>
-              {availableRegions.map((region: DropdownOption) => (
-                <option key={region.id} value={region.id}>
-                  {region.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* District Dropdown - only show if region is selected */}
-          {selectedRegionId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Region Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                District
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Region
               </label>
               <select
-                value={selectedDistrictId || ""}
-                onChange={(e) => handleDistrictChange(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={selectedRegionId || ""}
+                onChange={(e) => handleRegionChange(e.target.value)}
+                className="w-full p-2 border-2 border-gray-800 bg-white font-['Kalam'] text-sm font-semibold transition-all hover:bg-gray-50"
               >
-                <option value="">
-                  All Districts ({availableDistricts.length})
-                </option>
-                {availableDistricts.map((district: DropdownOption) => (
-                  <option key={district.id} value={district.id}>
-                    {district.name}
+                <option value="">All Regions ({availableRegions.length})</option>
+                {availableRegions.map((region: DropdownOption) => (
+                  <option key={region.id} value={region.id}>
+                    {region.name}
                   </option>
                 ))}
               </select>
             </div>
-          )}
 
-          {/* Show All Toggle */}
-          <div className="flex items-end">
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                showAll
-                  ? "bg-blue-100 text-blue-700 border border-blue-300"
-                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-              }`}
-            >
-              {showAll
-                ? `Showing All (${currentDisplayData.length})`
-                : `Top 10 of ${currentDisplayData.length}`}
-            </button>
+            {/* District Dropdown - only show if region is selected */}
+            {selectedRegionId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  District
+                </label>
+                <select
+                  value={selectedDistrictId || ""}
+                  onChange={(e) => handleDistrictChange(e.target.value)}
+                  className="w-full p-2 border-2 border-gray-800 bg-white font-['Kalam'] text-sm font-semibold transition-all hover:bg-gray-50"
+                >
+                  <option value="">
+                    All Districts ({availableDistricts.length})
+                  </option>
+                  {availableDistricts.map((district: DropdownOption) => (
+                    <option key={district.id} value={district.id}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Current Filter Display */}
-        <div className="flex items-center text-sm text-gray-600">
-          <span className="font-medium">Currently showing:</span>
-          <span className="ml-2">
-            {selectedDistrictName
-              ? `Suburbs in ${selectedDistrictName}`
-              : selectedRegionName
-              ? `Districts in ${selectedRegionName}`
-              : `All regions`}
-          </span>
-          <span className="ml-2 text-gray-400">
-            •{" "}
-            {selectedListingType === "HOUSES_TO_BUY"
-              ? "houses for sale"
-              : "houses for rent"}
-          </span>
+          {/* Current Filter Display */}
+          <div className="flex items-center text-sm text-gray-600">
+            <span className="font-medium">Currently showing:</span>
+            <span className="ml-2">
+              {selectedDistrictName
+                ? `Suburbs in ${selectedDistrictName}`
+                : selectedRegionName
+                ? `Districts in ${selectedRegionName}`
+                : `All regions`}
+            </span>
+            <span className="ml-2 text-gray-400">
+              •{" "}
+              {selectedListingType === "HOUSES_TO_BUY"
+                ? "houses for sale"
+                : "houses for rent"}
+            </span>
+            <span className="ml-2 text-gray-400">
+              • Showing all {displayData.length} results
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Results Table */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          {levelName}s by Listings
-          {selectedRegionName && ` in ${selectedRegionName}`}
-          {selectedDistrictName && ` in ${selectedDistrictName}`}
-        </h3>
+      <div className="sketch-box">
+        <div className="bg-gray-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(0,0,0,0.03)_10px,rgba(0,0,0,0.03)_20px)] p-6 border-b-2 border-gray-800">
+          <h3 className="text-2xl font-bold text-gray-800 yellow-highlight relative">
+            📋 {levelName}s by Listings
+            {selectedRegionName && ` in ${selectedRegionName}`}
+            {selectedDistrictName && ` in ${selectedDistrictName}`}
+          </h3>
+        </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full border-collapse">
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-gray-800 text-sm cursor-pointer select-none transition-all hover:bg-gray-100 hover:text-black uppercase tracking-wide border-r border-dashed border-gray-300">
                   Rank
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-gray-800 text-sm cursor-pointer select-none transition-all hover:bg-gray-100 hover:text-black uppercase tracking-wide border-r border-dashed border-gray-300"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center space-x-1">
@@ -605,7 +833,7 @@ export default function PropertyDashboard({
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-gray-800 text-sm cursor-pointer select-none transition-all hover:bg-gray-100 hover:text-black uppercase tracking-wide border-r border-dashed border-gray-300"
                   onClick={() => handleSort("listingCount")}
                 >
                   <div className="flex items-center space-x-1">
@@ -613,21 +841,27 @@ export default function PropertyDashboard({
                     <SortIndicator column="listingCount" />
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-gray-800 text-sm cursor-pointer select-none transition-all hover:bg-gray-100 hover:text-black uppercase tracking-wide border-r border-dashed border-gray-300">
                   % of Total
+                </th>
+                <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-gray-800 text-sm cursor-pointer select-none transition-all hover:bg-gray-100 hover:text-black uppercase tracking-wide">
+                  4 Week Trend
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody key={`table-${animationKey}`}>
               {displayData.map(
                 (item: DatabaseLocationSnapshot, index: number) => {
                   const name: string = getCurrentLocationName(item);
+                  const isClickable = currentLevel === "region" || currentLevel === "district";
+                  
                   return (
                     <tr
-                      key={item.id}
-                      className={index < 3 ? "bg-yellow-50" : ""}
+                      key={`${item.id}-${index}-${animationKey}`}
+                      className={`cascading-row-${animationKey} table-row transition-all border-b border-dashed border-gray-300`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="p-5 whitespace-nowrap text-sm text-gray-900">
                         <span
                           className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-white font-bold ${
                             index === 0
@@ -642,46 +876,41 @@ export default function PropertyDashboard({
                           {index + 1}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                      <td className="p-5 whitespace-nowrap">
+                        <div 
+                          className={`text-sm font-bold ${isClickable ? 'clickable-location' : 'text-gray-800'}`}
+                          onClick={isClickable ? () => handleLocationClick(item) : undefined}
+                        >
                           {name}
                         </div>
-                        {/* Show parent location info for suburbs */}
                         {currentLevel === "suburb" && (
                           <div className="text-xs text-gray-500">
                             {item.districtName}, {item.regionName}
                           </div>
                         )}
-                        {/* Show parent location info for districts */}
                         {currentLevel === "district" && (
                           <div className="text-xs text-gray-500">
                             {item.regionName}
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                      <td className="p-5 whitespace-nowrap text-sm text-gray-900 font-bold">
                         {item.listingCount?.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <span className="mr-2">
+                      <td className="p-5 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-6 font-bold p-2 border border-gray-800 transition-all">
+                          <span>
                             {(
-                              ((item.listingCount || 0) / totals.total) *
+                              ((item.listingCount || 0) / (filteredTotals?.total || totals.total)) *
                               100
                             ).toFixed(1)}
                             %
                           </span>
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{
-                                width: `${
-                                  ((item.listingCount || 0) / totals.total) *
-                                  100
-                                }%`,
-                              }}
-                            />
-                          </div>
+                        </div>
+                      </td>
+                      <td className="p-5">
+                        <div className="w-20 h-8 relative border border-dashed border-gray-300 bg-gray-50">
+                          <div className="w-full h-full bg-gray-800 opacity-20"></div>
                         </div>
                       </td>
                     </tr>
@@ -690,49 +919,6 @@ export default function PropertyDashboard({
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Recent Collections */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          Recent Data Collections
-        </h3>
-        <div className="space-y-3">
-          {snapshots
-            .slice(0, 5)
-            .map((snapshot: DatabaseWeeklySnapshot, index: number) => (
-              <div
-                key={snapshot.id}
-                className={`flex justify-between items-center p-4 rounded-lg ${
-                  index === 0
-                    ? "bg-green-50 border border-green-200"
-                    : "bg-gray-50"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      index === 0 ? "bg-green-500" : "bg-gray-400"
-                    }`}
-                  />
-                  <div>
-                    <span className="font-medium text-gray-900">
-                      {snapshot.listingType.replace(/_/g, " ")}
-                    </span>
-                    <div className="text-sm text-gray-500">
-                      {new Date(snapshot.collectedAt).toLocaleString("en-NZ")}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-blue-600">
-                    {snapshot.totalNzListings.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500">listings</div>
-                </div>
-              </div>
-            ))}
         </div>
       </div>
     </div>
