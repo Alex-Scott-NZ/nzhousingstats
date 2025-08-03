@@ -36,12 +36,12 @@ pnpm build
 
 # Reload via PM2
 echo "🔄 pm2 reload nzhousingstats"
-pm2 reload ecosystem.config.cjs --only nzhousingstats \
-  || pm2 start ecosystem.config.cjs --only nzhousingstats
+/home/madebyalex/.npm-global/bin/pm2 reload ecosystem.config.cjs --only nzhousingstats \
+  || /home/madebyalex/.npm-global/bin/pm2 start ecosystem.config.cjs --only nzhousingstats
 
 # Show status
 echo "📊 PM2 Status:"
-pm2 status nzhousingstats
+/home/madebyalex/.npm-global/bin/pm2 status nzhousingstats
 
 # Optional: Purge Cloudflare cache
 if [ -n "$CF_ZONE_ID" ] && [ -n "$CF_API_TOKEN" ]; then
