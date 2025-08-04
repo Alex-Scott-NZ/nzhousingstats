@@ -12,7 +12,7 @@ console.log(`⏰ Will collect data at 5:00 PM daily (NZ time)`); // ✅ Updated 
 console.log(`🕐 Started at: ${new Date().toISOString()}`);
 
 // Run at 5:00 PM every day NZ time: '0 17 * * *' ✅ Updated cron expression
-const task = cron.schedule('0 17 * * *', async () => {
+const task = cron.schedule('20 17 * * *', async () => {
   const timestamp = new Date().toISOString();
   console.log(`\n🔄 Starting daily data collection at ${timestamp}`);
   
