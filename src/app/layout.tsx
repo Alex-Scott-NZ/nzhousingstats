@@ -1,4 +1,4 @@
-// src/app/layout.tsx
+// src\app\layout.tsx
 import type { Metadata } from "next";
 import { Kalam } from "next/font/google";
 import "./globals.css";

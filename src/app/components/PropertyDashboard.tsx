@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   LineChart,
   Line,
@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { createSlug } from '../../lib/slugs'; // Add this import
+import { createSlug } from "../../lib/slugs"; // Add this import
 import styles from "./PropertyDashboard.module.scss";
 
 const LISTING_TYPE = "HOUSES_TO_BUY";
@@ -167,10 +167,12 @@ export default function PropertyDashboard({
   initialSuburbId,
 }: PropertyDashboardProps) {
   const router = useRouter();
-  
+
   // Use initial props for display, but don't allow state changes (navigation handles that)
   const [selectedRegionId] = useState<number | null>(initialRegionId || null);
-  const [selectedDistrictId] = useState<number | null>(initialDistrictId || null);
+  const [selectedDistrictId] = useState<number | null>(
+    initialDistrictId || null
+  );
   const [selectedSuburbId] = useState<number | null>(initialSuburbId || null);
   const [sortBy, setSortBy] = useState<SortColumn>("listingCount");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -735,20 +737,22 @@ export default function PropertyDashboard({
     }
     if (currentLevel === "district") {
       // District level: /auckland/auckland-city
-      const region = availableRegions.find(r => r.id === item.regionId);
+      const region = availableRegions.find((r) => r.id === item.regionId);
       if (region) {
         return `/${createSlug(region.name)}/${createSlug(item.districtName!)}`;
       }
     }
     if (currentLevel === "suburb") {
       // Suburb level: /auckland/auckland-city/mount-wellington
-      const district = availableDistricts.find(d => d.id === item.districtId);
-      const region = availableRegions.find(r => r.id === item.regionId);
+      const district = availableDistricts.find((d) => d.id === item.districtId);
+      const region = availableRegions.find((r) => r.id === item.regionId);
       if (district && region) {
-        return `/${createSlug(region.name)}/${createSlug(district.name)}/${createSlug(item.suburbName!)}`;
+        return `/${createSlug(region.name)}/${createSlug(
+          district.name
+        )}/${createSlug(item.suburbName!)}`;
       }
     }
-    return '#';
+    return "#";
   };
 
   // ✅ UPDATED: Helper function to get breadcrumb URLs
@@ -756,14 +760,16 @@ export default function PropertyDashboard({
     if (selectedRegionName) {
       return `/${createSlug(selectedRegionName)}`;
     }
-    return '/';
+    return "/";
   };
 
   const getDistrictUrl = (): string => {
     if (selectedRegionName && selectedDistrictName) {
-      return `/${createSlug(selectedRegionName)}/${createSlug(selectedDistrictName)}`;
+      return `/${createSlug(selectedRegionName)}/${createSlug(
+        selectedDistrictName
+      )}`;
     }
-    return '/';
+    return "/";
   };
 
   const SortIndicator = ({ column }: { column: SortColumn }) => {
@@ -935,7 +941,7 @@ export default function PropertyDashboard({
 
           {/* Chart Container */}
           <div className="bg-white border-2 border-gray-800 p-3 sm:p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
-            <div className="absolute -top-4 left-3 sm:left-5 bg-white px-2 font-bold border-2 border-gray-800 text-gray-800 uppercase text-sm sm:text-base underline decoration-double">
+            <div className="absolute -top-4 left-3 sm:left-5 bg-white px-2 font-bold border-2 border-gray-800 text-gray-800 uppercase text-sm sm:text-base">
               {selectedSuburbName ||
                 selectedDistrictName ||
                 selectedRegionName ||

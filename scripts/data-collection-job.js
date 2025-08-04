@@ -8,11 +8,11 @@ import cron from 'node-cron';
 import { collectPropertyData } from '../lib/data-collection.js';
 
 console.log('🏠 NZ Housing Stats Data Collection Service Starting...');
-console.log(`⏰ Will collect data at 10:00 PM daily (NZ time)`);
+console.log(`⏰ Will collect data at 5:00 PM daily (NZ time)`); // ✅ Updated message
 console.log(`🕐 Started at: ${new Date().toISOString()}`);
 
-// Run at 10:00 PM every day NZ time: '0 22 * * *'
-const task = cron.schedule('10 22 * * *', async () => {
+// Run at 5:00 PM every day NZ time: '0 17 * * *' ✅ Updated cron expression
+const task = cron.schedule('0 17 * * *', async () => {
   const timestamp = new Date().toISOString();
   console.log(`\n🔄 Starting daily data collection at ${timestamp}`);
   
@@ -35,14 +35,14 @@ const task = cron.schedule('10 22 * * *', async () => {
     // }
 
     console.log(`🎉 Daily data collection completed at ${new Date().toISOString()}`);
-    console.log(`📈 Next collection scheduled for tomorrow at 10:00 PM NZ time\n`);
+    console.log(`📈 Next collection scheduled for tomorrow at 5:00 PM NZ time\n`); // ✅ Updated message
     
   } catch (error) {
     console.error('💥 Data collection job failed:', error);
     console.error('🔄 Will retry tomorrow at scheduled time\n');
   }
 }, {
-  timezone: "Pacific/Auckland" // 🔧 FIXED: Removed 'scheduled' property
+  timezone: "Pacific/Auckland"
 });
 
 // Start the task
