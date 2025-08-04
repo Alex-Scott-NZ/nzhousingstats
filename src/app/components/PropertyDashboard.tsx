@@ -310,10 +310,7 @@ export default function PropertyDashboard({
 
     const padding = Math.max(range * 0.1, 5);
 
-    return [
-      Math.max(0, Math.floor(min - padding)),
-      Math.ceil(max + padding),
-    ];
+    return [Math.max(0, Math.floor(min - padding)), Math.ceil(max + padding)];
   }, [trendData]);
 
   useEffect(() => {
@@ -761,9 +758,7 @@ export default function PropertyDashboard({
   const SortIndicator = ({ column }: { column: SortColumn }) => {
     if (sortBy !== column) return <span className="text-gray-400">↕️</span>;
     return (
-      <span className="text-blue-600">
-        {sortOrder === "asc" ? "↑" : "↓"}
-      </span>
+      <span className="text-blue-600">{sortOrder === "asc" ? "↑" : "↓"}</span>
     );
   };
 
@@ -779,50 +774,53 @@ export default function PropertyDashboard({
   }
 
   return (
-    <div
-      className="max-w-7xl mx-auto p-5 space-y-5 font-['Kalam',cursive] min-h-screen"
-      style={{
-        backgroundColor: "#fafafa",
-        color: "#000",
-        backgroundImage:
-          "linear-gradient(#e8e8e8 1px, transparent 1px), linear-gradient(90deg, #e8e8e8 1px, transparent 1px)",
-        backgroundSize: "20px 20px",
-      }}
-    >
-      <style jsx>{`
-        @import url("https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap");
-      `}</style>
-
+    <div className="w-full px-2 sm:px-4 lg:px-6 xl:px-8 max-w-7xl mx-auto space-y-3 sm:space-y-5 min-h-screen bg-[#fafafa]">
       {/* Header */}
       <div className={styles["sketch-box"]}>
-        <div className="p-8 text-center border-b-2 border-dashed border-gray-800">
-          <h1 className={`text-4xl font-bold mb-2 text-gray-800 ${styles["yellow-highlight"]} relative`}>
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4">
+          <h1
+            className={`text-2xl sm:text-3xl font-bold text-left text-gray-800 ${styles["yellow-highlight"]} relative`}
+          >
             Property Listings Tracker ✏️
           </h1>
-          <p className="text-lg font-normal mt-2 text-gray-500">
-            Real-time insights into New Zealand's property market trends
-          </p>
+        </div>
+        <div className="px-4 sm:px-6 pb-3 sm:pb-4 border-t border-dashed border-gray-300">
+          <div className="text-xs flex items-baseline gap-2 pt-3 text-gray-500">
+            <div className={styles["status-dot"]}></div>
+            <span className="font-semibold uppercase tracking-wide">
+              LAST UPDATED:{" "}
+              <span className="font-bold text-gray-700">
+                {new Date(totals.lastUpdated).toLocaleString("en-NZ", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Breadcrumb */}
       <div className={styles["sketch-box"]}>
-        <div className="p-4 text-base bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.05)_2px,rgba(0,0,0,0.05)_4px)]">
+        <div className="p-3 sm:p-4 pb-2 sm:pb-3 text-sm sm:text-base bg-[#fe90e8]">
           <span
-            className="underline decoration-wavy cursor-pointer font-semibold hover:shadow-[1px_1px_0px_#ddd] transition-all text-gray-800"
+            className="cursor-pointer font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
             onClick={() => {
               setSelectedRegionId(null);
               setSelectedDistrictId(null);
               setSelectedSuburbId(null);
             }}
           >
-            🇳🇿 New Zealand
+            New Zealand
           </span>
           {selectedRegionName && (
             <>
-              <span className="mx-3 text-gray-500">›</span>
+              <span className="mx-2 sm:mx-3 text-black font-bold">›</span>
               <span
-                className="underline decoration-wavy cursor-pointer font-semibold text-gray-800"
+                className="cursor-pointer font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
                 onClick={() => {
                   setSelectedDistrictId(null);
                   setSelectedSuburbId(null);
@@ -834,12 +832,16 @@ export default function PropertyDashboard({
           )}
           {selectedDistrictName && (
             <>
-              <span className="mx-3 text-gray-500">›</span>
+              <span className="mx-2 sm:mx-3 text-black font-bold">›</span>
               <span
-                className={`font-semibold text-gray-800 ${
-                  !selectedSuburbId ? "" : "underline decoration-wavy cursor-pointer"
+                className={`font-bold text-black uppercase px-2 py-1 border-2 border-[#fe90e8] ${
+                  !selectedSuburbId
+                    ? ""
+                    : "cursor-pointer hover:border-black hover:bg-black hover:text-[#fe90e8] transition-all duration-200"
                 }`}
-                onClick={() => selectedSuburbId ? setSelectedSuburbId(null) : undefined}
+                onClick={() =>
+                  selectedSuburbId ? setSelectedSuburbId(null) : undefined
+                }
               >
                 {selectedDistrictName}
               </span>
@@ -847,8 +849,10 @@ export default function PropertyDashboard({
           )}
           {selectedSuburbName && (
             <>
-              <span className="mx-3 text-gray-500">›</span>
-              <span className="font-semibold text-gray-800">{selectedSuburbName}</span>
+              <span className="mx-2 sm:mx-3 text-black font-bold">›</span>
+              <span className="font-bold text-black uppercase px-2 py-1 border-2 border-[#fe90e8]">
+                {selectedSuburbName}
+              </span>
             </>
           )}
         </div>
@@ -856,120 +860,134 @@ export default function PropertyDashboard({
 
       {/* Summary Card */}
       <div className={styles["sketch-box"]}>
-        <div className="p-10">
-          <div className="flex justify-between items-start mb-8 border-b-2 border-gray-800 pb-5">
+        <div className="p-4 sm:p-6 lg:p-10">
+          <div className="mb-6 sm:mb-8 pb-2">
             <div>
-              <h2 className={`text-3xl font-bold mb-2 text-gray-800 ${styles["yellow-highlight"]} relative`}>
+              <h2
+                className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-800 ${styles["yellow-highlight"]} relative uppercase`}
+              >
                 📊{" "}
-                {selectedSuburbName
-                  ? `${selectedSuburbName} Suburb Details`
-                  : selectedDistrictName
-                  ? `${selectedDistrictName} Suburbs`
-                  : selectedRegionName
-                  ? `${selectedRegionName} Districts`
-                  : "New Zealand Overview"}
-              </h2>
-              <div className="text-sm flex items-center gap-2 border border-dashed border-gray-400 p-2 bg-gray-50">
-                <div className={styles["status-dot"]}></div>
-                <span className="text-gray-500">
-                  Last updated:{" "}
-                  <span>
-                    {new Date(totals.lastUpdated).toLocaleString("en-NZ", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                <span className="underline decoration-double">
+                  {selectedSuburbName
+                    ? `${selectedSuburbName} Suburb Details`
+                    : selectedDistrictName
+                    ? `${selectedDistrictName} District`
+                    : selectedRegionName
+                    ? `${selectedRegionName} Region`
+                    : "New Zealand Overview"}
                 </span>
-              </div>
+              </h2>
             </div>
           </div>
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-white p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-1 hover:rotate-[-1deg] hover:shadow-[4px_4px_0px_#333] relative shadow-[2px_2px_0px_#333]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-10">
+            <div className="bg-white p-4 sm:p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_#333] relative shadow-[2px_2px_0px_#333]">
               <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
-              <div className="text-4xl font-bold mb-2 underline decoration-double text-gray-800">
-                {filteredTotals?.total.toLocaleString() || totals.total.toLocaleString()}
+              <div className="text-3xl sm:text-4xl font-bold mb-2 underline decoration-double text-gray-800">
+                {filteredTotals?.total.toLocaleString() ||
+                  totals.total.toLocaleString()}
               </div>
-              <div className="text-sm mb-3 font-semibold uppercase tracking-wide text-gray-500">
-                {filteredTotals ? `${filteredTotals.locationName} Listings` : "Total Listings"}
+              <div className="text-xs sm:text-sm mb-3 font-semibold uppercase tracking-wide text-gray-500">
+                {filteredTotals
+                  ? `${filteredTotals.locationName} Listings`
+                  : "Total Listings"}
               </div>
-              <div className="text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white bg-gradient-to-r from-emerald-600 to-emerald-500">
+              <div className="text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white bg-gradient-to-r from-emerald-600 to-emerald-500">
                 <span>↗</span>
                 <span>Houses for Sale</span>
               </div>
             </div>
 
-            <div className="bg-white p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-1 hover:rotate-[-1deg] hover:shadow-[4px_4px_0px_#333] relative shadow-[2px_2px_0px_#333]">
+            <div className="bg-white p-4 sm:p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_#333] relative shadow-[2px_2px_0px_#333]">
               <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
-              <div className="text-4xl font-bold mb-2 underline decoration-double text-gray-800">
+              <div className="text-3xl sm:text-4xl font-bold mb-2 underline decoration-double text-gray-800">
                 {changeMetrics
-                  ? (changeMetrics.change > 0 ? "+" : "") + changeMetrics.change.toLocaleString()
+                  ? (changeMetrics.change > 0 ? "+" : "") +
+                    changeMetrics.change.toLocaleString()
                   : "N/A"}
               </div>
-              <div className="text-sm mb-3 font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-xs sm:text-sm mb-3 font-semibold uppercase tracking-wide text-gray-500">
                 Trend Change
               </div>
-              <div className={`text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white ${
-                changeMetrics?.deltaType === "increase"
-                  ? "bg-gradient-to-r from-emerald-600 to-emerald-500"
-                  : "bg-gradient-to-r from-red-500 to-red-600"
-              }`}>
-                <span>{changeMetrics?.deltaType === "increase" ? "↗" : "↘"}</span>
+              <div
+                className={`text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white ${
+                  changeMetrics?.deltaType === "increase"
+                    ? "bg-gradient-to-r from-emerald-600 to-emerald-500"
+                    : "bg-gradient-to-r from-red-500 to-red-600"
+                }`}
+              >
                 <span>
-                  {changeMetrics ? `${changeMetrics.changePercent.toFixed(1)}%` : "No data"}
+                  {changeMetrics?.deltaType === "increase" ? "↗" : "↘"}
+                </span>
+                <span>
+                  {changeMetrics
+                    ? `${changeMetrics.changePercent.toFixed(1)}%`
+                    : "No data"}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Chart Container */}
-          <div className="bg-white border-2 border-gray-800 p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
-            <div className="absolute -top-4 left-5 bg-white px-2 font-bold border-2 border-gray-800 text-gray-800">
-              CHART 📈{" "}
-              {selectedSuburbName || selectedDistrictName || selectedRegionName || "New Zealand"}
+          <div className="bg-white border-2 border-gray-800 p-3 sm:p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
+            <div className="absolute -top-4 left-3 sm:left-5 bg-white px-2 font-bold border-2 border-gray-800 text-gray-800 uppercase text-sm sm:text-base underline decoration-double">
+              {selectedSuburbName ||
+                selectedDistrictName ||
+                selectedRegionName ||
+                "New Zealand"}{" "}
+              CHART 📈
             </div>
 
             {trendData.length > 1 && (
               <div className="mb-4 text-center">
-                <div className="text-xs text-gray-600 font-semibold">
-                  Range:{" "}
-                  {Math.min(...trendData.map((d) => d.listings)).toLocaleString()} -{" "}
-                  {Math.max(...trendData.map((d) => d.listings)).toLocaleString()} listings
+                <div className="text-xs text-gray-600 font-semibold uppercase">
+                  RANGE:{" "}
+                  {Math.min(
+                    ...trendData.map((d) => d.listings)
+                  ).toLocaleString()}{" "}
+                  -{" "}
+                  {Math.max(
+                    ...trendData.map((d) => d.listings)
+                  ).toLocaleString()}{" "}
+                  LISTINGS
                 </div>
               </div>
             )}
 
             {trendData.length > 1 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={trendData} margin={{ top: 20, right: 30, left: 40, bottom: 20 }}>
+                <LineChart
+                  data={trendData}
+                  margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "#666", fontFamily: "Kalam" }}
+                    tick={{ fontSize: 12, fill: "#666" }}
+                    tickFormatter={(value) => value.toUpperCase()}
                   />
                   <YAxis
                     domain={chartYAxisDomain}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fill: "#666", fontFamily: "Kalam" }}
+                    tick={{ fontSize: 11, fill: "#666" }}
                     width={35}
                     tickFormatter={(value) => value.toLocaleString()}
                   />
                   <Tooltip
-                    formatter={(value: number) => [value.toLocaleString(), "Listings"]}
-                    labelStyle={{ color: "#333", fontFamily: "Kalam" }}
+                    formatter={(value: number) => [
+                      value.toLocaleString(),
+                      "LISTINGS",
+                    ]}
+                    labelStyle={{ color: "#333" }}
                     contentStyle={{
                       backgroundColor: "rgba(255, 255, 255, 0.95)",
                       border: "2px solid #333",
                       borderRadius: "0px",
                       fontSize: "14px",
-                      fontFamily: "Kalam",
                     }}
                   />
                   <Line
@@ -992,9 +1010,12 @@ export default function PropertyDashboard({
               <div className="h-48 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-2xl mb-2">📊</div>
-                  <p className="text-sm text-gray-600">Collecting trend data...</p>
+                  <p className="text-sm text-gray-600">
+                    Collecting trend data...
+                  </p>
                   <p className="text-xs text-gray-500">
-                    More data points needed for chart ({trendData.length} available)
+                    More data points needed for chart ({trendData.length}{" "}
+                    available)
                   </p>
                 </div>
               </div>
@@ -1007,7 +1028,9 @@ export default function PropertyDashboard({
       {!selectedSuburbId && (
         <div className={styles["sketch-box"]}>
           <div className="bg-gray-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(0,0,0,0.03)_10px,rgba(0,0,0,0.03)_20px)] p-6 border-b-2 border-gray-800">
-            <h3 className={`text-2xl font-bold text-gray-800 ${styles["yellow-highlight"]} relative`}>
+            <h3
+              className={`text-2xl font-bold text-gray-800 ${styles["yellow-highlight"]} relative`}
+            >
               📋 {levelName}s by Listings
               {selectedRegionName && ` in ${selectedRegionName}`}
               {selectedDistrictName && ` in ${selectedDistrictName}`}
@@ -1051,111 +1074,136 @@ export default function PropertyDashboard({
                 </tr>
               </thead>
               <tbody>
-                {displayData.map((item: DatabaseLocationSnapshot, index: number) => {
-                  const name: string = getCurrentLocationName(item);
-                  const isClickable =
-                    currentLevel === "region" || currentLevel === "district" || currentLevel === "suburb";
+                {displayData.map(
+                  (item: DatabaseLocationSnapshot, index: number) => {
+                    const name: string = getCurrentLocationName(item);
+                    const isClickable =
+                      currentLevel === "region" ||
+                      currentLevel === "district" ||
+                      currentLevel === "suburb";
 
-                  const locationId = selectedDistrictId
-                    ? item.suburbId
-                    : selectedRegionId
-                    ? item.districtId
-                    : item.regionId;
-                  const trends = locationTrends[String(locationId)];
+                    const locationId = selectedDistrictId
+                      ? item.suburbId
+                      : selectedRegionId
+                      ? item.districtId
+                      : item.regionId;
+                    const trends = locationTrends[String(locationId)];
 
-                  return (
-                    <tr
-                      key={`${item.id}-${index}`}
-                      className={`${styles["table-row"]} transition-all border-b border-dashed border-gray-300`}
-                    >
-                      <td className="p-5 whitespace-nowrap">
-                        <div
-                          className={`text-lg font-semibold uppercase tracking-wide ${
-                            isClickable ? styles["clickable-location"] : "text-gray-800"
-                          }`}
-                          onClick={isClickable ? () => handleLocationClick(item) : undefined}
-                        >
-                          {name}
-                        </div>
-                        {currentLevel === "suburb" && (
-                          <div className="text-xs text-gray-500">{item.districtName}</div>
-                        )}
-                      </td>
-                      <td className="p-5 whitespace-nowrap text-lg font-semibold uppercase tracking-wide text-gray-800">
-                        {item.listingCount?.toLocaleString()}
-                      </td>
-                      <td className="p-5 whitespace-nowrap text-lg text-gray-500">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-lg">
-                            {(
-                              ((item.listingCount || 0) / (filteredTotals?.total || totals.total)) * 100
-                            ).toFixed(1)}%
-                          </span>
-                          <div className="ml-3 flex-1 max-w-[100px] bg-gray-200 rounded-full h-2">
+                    return (
+                      <tr
+                        key={`${item.id}-${index}`}
+                        className={`${styles["table-row"]} transition-all border-b border-dashed border-gray-300`}
+                      >
+                        <td className="p-5 whitespace-nowrap">
+                          <div
+                            className={`text-lg font-semibold uppercase tracking-wide ${
+                              isClickable
+                                ? styles["clickable-location"]
+                                : "text-gray-800"
+                            }`}
+                            onClick={
+                              isClickable
+                                ? () => handleLocationClick(item)
+                                : undefined
+                            }
+                          >
+                            {name}
+                          </div>
+                          {currentLevel === "suburb" && (
+                            <div className="text-xs text-gray-500">
+                              {item.districtName}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-5 whitespace-nowrap text-lg font-semibold uppercase tracking-wide text-gray-800">
+                          {item.listingCount?.toLocaleString()}
+                        </td>
+                        <td className="p-5 whitespace-nowrap text-lg text-gray-500">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-lg">
+                              {(
+                                ((item.listingCount || 0) /
+                                  (filteredTotals?.total || totals.total)) *
+                                100
+                              ).toFixed(1)}
+                              %
+                            </span>
+                            <div className="ml-3 flex-1 max-w-[100px] bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    ((item.listingCount || 0) /
+                                      (filteredTotals?.total || totals.total)) *
+                                      100
+                                  )}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-5 whitespace-nowrap text-lg">
+                          {trends ? (
                             <div
-                              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              className="flex items-center gap-1"
                               style={{
-                                width: `${Math.min(
-                                  100,
-                                  ((item.listingCount || 0) / (filteredTotals?.total || totals.total)) * 100
-                                )}%`,
+                                color:
+                                  trends.weekChange >= 0
+                                    ? "#059669"
+                                    : "#dc2626",
                               }}
-                            ></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-5 whitespace-nowrap text-lg">
-                        {trends ? (
-                          <div
-                            className="flex items-center gap-1"
-                            style={{
-                              color: trends.weekChange >= 0 ? "#059669" : "#dc2626",
-                            }}
-                          >
-                            <span className="font-bold">
-                              {trends.weekChange >= 0 ? "+" : ""}
-                              {trends.weekChange}
-                            </span>
-                            <span className="text-sm">
-                              ({trends.weekPercent >= 0 ? "+" : ""}
-                              {trends.weekPercent.toFixed(1)}%)
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">N/A</span>
-                        )}
-                      </td>
-                      <td className="p-5 whitespace-nowrap text-lg ">
-                        {trends && trends.hasMonthlyData && trends.monthChange !== null ? (
-                          <div
-                            className="flex items-center gap-1"
-                            style={{
-                              color: trends.monthChange >= 0 ? "#059669" : "#dc2626",
-                            }}
-                          >
-                            <span className="font-bold">
-                              {trends.monthChange >= 0 ? "+" : ""}
-                              {trends.monthChange}
-                            </span>
-                            <span className="text-xs">
-                              ({trends.monthPercent! >= 0 ? "+" : ""}
-                              {trends.monthPercent!.toFixed(1)}%)
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">N/A</span>
-                        )}
-                      </td>
-                      <td className="p-5">
-                        {trends?.sparklineData ? (
-                          <SimpleSparkline data={trends.sparklineData} />
-                        ) : (
-                          <div className="w-16 h-5 bg-gray-100 border border-gray-300"></div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                            >
+                              <span className="font-bold">
+                                {trends.weekChange >= 0 ? "+" : ""}
+                                {trends.weekChange}
+                              </span>
+                              <span className="text-sm">
+                                ({trends.weekPercent >= 0 ? "+" : ""}
+                                {trends.weekPercent.toFixed(1)}%)
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
+                        </td>
+                        <td className="p-5 whitespace-nowrap text-lg ">
+                          {trends &&
+                          trends.hasMonthlyData &&
+                          trends.monthChange !== null ? (
+                            <div
+                              className="flex items-center gap-1"
+                              style={{
+                                color:
+                                  trends.monthChange >= 0
+                                    ? "#059669"
+                                    : "#dc2626",
+                              }}
+                            >
+                              <span className="font-bold">
+                                {trends.monthChange >= 0 ? "+" : ""}
+                                {trends.monthChange}
+                              </span>
+                              <span className="text-xs">
+                                ({trends.monthPercent! >= 0 ? "+" : ""}
+                                {trends.monthPercent!.toFixed(1)}%)
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
+                        </td>
+                        <td className="p-5">
+                          {trends?.sparklineData ? (
+                            <SimpleSparkline data={trends.sparklineData} />
+                          ) : (
+                            <div className="w-16 h-5 bg-gray-100 border border-gray-300"></div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }
+                )}
               </tbody>
             </table>
           </div>
@@ -1167,7 +1215,9 @@ export default function PropertyDashboard({
         <div className={styles["sketch-box"]}>
           <div className="p-8 text-center">
             <div className="text-6xl mb-4">🏘️</div>
-            <h3 className={`text-2xl font-bold mb-4 text-gray-800 ${styles["yellow-highlight"]} relative`}>
+            <h3
+              className={`text-2xl font-bold mb-4 text-gray-800 ${styles["yellow-highlight"]} relative`}
+            >
               Suburb Level Detail
             </h3>
             <p className="text-lg mb-2 text-gray-500">
@@ -1183,7 +1233,7 @@ export default function PropertyDashboard({
             <div className="mt-6">
               <button
                 onClick={() => setSelectedSuburbId(null)}
-                className="px-4 py-2 border-2 border-gray-800 bg-white font-['Kalam'] font-semibold transition-all hover:bg-gray-50 hover:transform hover:-translate-y-1 hover:shadow-[2px_2px_0px_#333] text-gray-800"
+                className="px-4 py-2 border-2 border-gray-800 bg-white font-semibold transition-all hover:bg-gray-50 hover:transform hover:-translate-y-1 hover:shadow-[2px_2px_0px_#333] text-gray-800"
               >
                 ← Back to {selectedDistrictName} Suburbs
               </button>

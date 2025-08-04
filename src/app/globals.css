@@ -3,5 +3,9 @@
 body {
   background: #ffffff;
   color: #171717;
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Add this to your globals.css if it's not already there */
+.font-kalam {
+  font-family: var(--font-kalam), cursive;
 }
