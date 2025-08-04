@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   LineChart,
   Line,
@@ -11,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { createSlug } from '../../lib/slugs'; // Add this import
 import styles from "./PropertyDashboard.module.scss";
 
 const LISTING_TYPE = "HOUSES_TO_BUY";
@@ -80,6 +83,9 @@ interface PropertyDashboardProps {
   allData: AllData;
   snapshots: DatabaseWeeklySnapshot[];
   historicalData: HistoricalSnapshot[];
+  initialRegionId?: number;
+  initialDistrictId?: number;
+  initialSuburbId?: number;
 }
 
 interface ChartDataPoint {
@@ -156,18 +162,23 @@ export default function PropertyDashboard({
   allData,
   snapshots,
   historicalData,
+  initialRegionId,
+  initialDistrictId,
+  initialSuburbId,
 }: PropertyDashboardProps) {
-  const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
-  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
-    null
-  );
-  const [selectedSuburbId, setSelectedSuburbId] = useState<number | null>(null);
+  const router = useRouter();
+  
+  // Use initial props for display, but don't allow state changes (navigation handles that)
+  const [selectedRegionId] = useState<number | null>(initialRegionId || null);
+  const [selectedDistrictId] = useState<number | null>(initialDistrictId || null);
+  const [selectedSuburbId] = useState<number | null>(initialSuburbId || null);
   const [sortBy, setSortBy] = useState<SortColumn>("listingCount");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const currentListingData: ListingTypeData = allData[LISTING_TYPE];
   const totals: TotalsData | null = currentListingData?.totals;
 
+  // ... (keep all the existing data processing functions unchanged)
   const getTrendData = (
     selectedRegionId: number | null,
     selectedDistrictId: number | null,
@@ -657,45 +668,6 @@ export default function PropertyDashboard({
     selectedDistrictId,
   ]);
 
-  const handleRegionChange = (regionId: string): void => {
-    const id = regionId ? Number(regionId) : null;
-    console.log("🎯 Region changed:", { regionId, id });
-    setSelectedRegionId(id);
-    setSelectedDistrictId(null);
-    setSelectedSuburbId(null);
-  };
-
-  const handleDistrictChange = (districtId: string): void => {
-    const id = districtId ? Number(districtId) : null;
-    console.log("🎯 District changed:", { districtId, id });
-    setSelectedDistrictId(id);
-    setSelectedSuburbId(null);
-  };
-
-  const handleSuburbChange = (suburbId: string): void => {
-    const id = suburbId ? Number(suburbId) : null;
-    console.log("🎯 Suburb changed:", { suburbId, id });
-    setSelectedSuburbId(id);
-  };
-
-  const handleLocationClick = (item: DatabaseLocationSnapshot): void => {
-    console.log("🎯 Location clicked:", item);
-
-    if (currentLevel === "region") {
-      console.log("📊 Setting region:", item.regionId);
-      setSelectedRegionId(item.regionId);
-      setSelectedDistrictId(null);
-      setSelectedSuburbId(null);
-    } else if (currentLevel === "district") {
-      console.log("📊 Setting district:", item.districtId);
-      setSelectedDistrictId(item.districtId);
-      setSelectedSuburbId(null);
-    } else if (currentLevel === "suburb") {
-      console.log("📊 Setting suburb:", item.suburbId);
-      setSelectedSuburbId(item.suburbId);
-    }
-  };
-
   const handleSort = (column: SortColumn): void => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -755,6 +727,45 @@ export default function PropertyDashboard({
     return "Unknown";
   };
 
+  // ✅ UPDATED: Helper function to generate slug-based URLs for table items
+  const getItemUrl = (item: DatabaseLocationSnapshot): string => {
+    if (currentLevel === "region") {
+      // Region level: /auckland
+      return `/${createSlug(item.regionName)}`;
+    }
+    if (currentLevel === "district") {
+      // District level: /auckland/auckland-city
+      const region = availableRegions.find(r => r.id === item.regionId);
+      if (region) {
+        return `/${createSlug(region.name)}/${createSlug(item.districtName!)}`;
+      }
+    }
+    if (currentLevel === "suburb") {
+      // Suburb level: /auckland/auckland-city/mount-wellington
+      const district = availableDistricts.find(d => d.id === item.districtId);
+      const region = availableRegions.find(r => r.id === item.regionId);
+      if (district && region) {
+        return `/${createSlug(region.name)}/${createSlug(district.name)}/${createSlug(item.suburbName!)}`;
+      }
+    }
+    return '#';
+  };
+
+  // ✅ UPDATED: Helper function to get breadcrumb URLs
+  const getRegionUrl = (): string => {
+    if (selectedRegionName) {
+      return `/${createSlug(selectedRegionName)}`;
+    }
+    return '/';
+  };
+
+  const getDistrictUrl = (): string => {
+    if (selectedRegionName && selectedDistrictName) {
+      return `/${createSlug(selectedRegionName)}/${createSlug(selectedDistrictName)}`;
+    }
+    return '/';
+  };
+
   const SortIndicator = ({ column }: { column: SortColumn }) => {
     if (sortBy !== column) return <span className="text-gray-400">↕️</span>;
     return (
@@ -803,48 +814,41 @@ export default function PropertyDashboard({
         </div>
       </div>
 
-      {/* Breadcrumb */}
+      {/* ✅ UPDATED: Breadcrumb with slug-based Links */}
       <div className={styles["sketch-box"]}>
         <div className="p-3 sm:p-4 pb-2 sm:pb-3 text-sm sm:text-base bg-[#fe90e8]">
-          <span
-            className="cursor-pointer font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
-            onClick={() => {
-              setSelectedRegionId(null);
-              setSelectedDistrictId(null);
-              setSelectedSuburbId(null);
-            }}
+          <Link
+            href="/"
+            className="font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
           >
             New Zealand
-          </span>
+          </Link>
           {selectedRegionName && (
             <>
               <span className="mx-2 sm:mx-3 text-black font-bold">›</span>
-              <span
-                className="cursor-pointer font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
-                onClick={() => {
-                  setSelectedDistrictId(null);
-                  setSelectedSuburbId(null);
-                }}
+              <Link
+                href={getRegionUrl()}
+                className="font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
               >
                 {selectedRegionName}
-              </span>
+              </Link>
             </>
           )}
           {selectedDistrictName && (
             <>
               <span className="mx-2 sm:mx-3 text-black font-bold">›</span>
-              <span
-                className={`font-bold text-black uppercase px-2 py-1 border-2 border-[#fe90e8] ${
-                  !selectedSuburbId
-                    ? ""
-                    : "cursor-pointer hover:border-black hover:bg-black hover:text-[#fe90e8] transition-all duration-200"
-                }`}
-                onClick={() =>
-                  selectedSuburbId ? setSelectedSuburbId(null) : undefined
-                }
-              >
-                {selectedDistrictName}
-              </span>
+              {selectedSuburbId ? (
+                <Link
+                  href={getDistrictUrl()}
+                  className="font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"
+                >
+                  {selectedDistrictName}
+                </Link>
+              ) : (
+                <span className="font-bold text-black uppercase px-2 py-1 border-2 border-[#fe90e8]">
+                  {selectedDistrictName}
+                </span>
+              )}
             </>
           )}
           {selectedSuburbName && (
@@ -1024,7 +1028,7 @@ export default function PropertyDashboard({
         </div>
       </div>
 
-      {/* Results Table */}
+      {/* ✅ UPDATED: Results Table with slug-based navigation */}
       {!selectedSuburbId && (
         <div className={styles["sketch-box"]}>
           <div className="bg-gray-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(0,0,0,0.03)_10px,rgba(0,0,0,0.03)_20px)] p-6 border-b-2 border-gray-800">
@@ -1095,20 +1099,18 @@ export default function PropertyDashboard({
                         className={`${styles["table-row"]} transition-all border-b border-dashed border-gray-300`}
                       >
                         <td className="p-5 whitespace-nowrap">
-                          <div
-                            className={`text-lg font-semibold uppercase tracking-wide ${
-                              isClickable
-                                ? styles["clickable-location"]
-                                : "text-gray-800"
-                            }`}
-                            onClick={
-                              isClickable
-                                ? () => handleLocationClick(item)
-                                : undefined
-                            }
-                          >
-                            {name}
-                          </div>
+                          {isClickable ? (
+                            <Link
+                              href={getItemUrl(item)}
+                              className={`text-lg font-semibold uppercase tracking-wide ${styles["clickable-location"]} block`}
+                            >
+                              {name}
+                            </Link>
+                          ) : (
+                            <div className="text-lg font-semibold uppercase tracking-wide text-gray-800">
+                              {name}
+                            </div>
+                          )}
                           {currentLevel === "suburb" && (
                             <div className="text-xs text-gray-500">
                               {item.districtName}
@@ -1210,7 +1212,7 @@ export default function PropertyDashboard({
         </div>
       )}
 
-      {/* Suburb details message */}
+      {/* ✅ UPDATED: Suburb details with slug-based back navigation */}
       {selectedSuburbId && (
         <div className={styles["sketch-box"]}>
           <div className="p-8 text-center">
@@ -1231,12 +1233,12 @@ export default function PropertyDashboard({
               property listings.
             </p>
             <div className="mt-6">
-              <button
-                onClick={() => setSelectedSuburbId(null)}
-                className="px-4 py-2 border-2 border-gray-800 bg-white font-semibold transition-all hover:bg-gray-50 hover:transform hover:-translate-y-1 hover:shadow-[2px_2px_0px_#333] text-gray-800"
+              <Link
+                href={getDistrictUrl()}
+                className="px-4 py-2 border-2 border-gray-800 bg-white font-semibold transition-all hover:bg-gray-50 hover:transform hover:-translate-y-1 hover:shadow-[2px_2px_0px_#333] text-gray-800 inline-block"
               >
                 ← Back to {selectedDistrictName} Suburbs
-              </button>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,5 +1,4 @@
 // lib\data-collection.ts
-//scripts/data-collection.ts
 import { db } from "../lib/db";
 import { sql } from "drizzle-orm";
 import type {
@@ -417,7 +416,7 @@ export async function getLocationsWithFilters(filters: {
   locationType: "region" | "district" | "suburb";
   limit?: number;
 }) {
-  const { listingType, locationType, limit = 1000 } = filters;
+  const { listingType, locationType, limit = 5000 } = filters;
 
   if (locationType === "region") {
     const results = await getRegionTotals(listingType, limit);
