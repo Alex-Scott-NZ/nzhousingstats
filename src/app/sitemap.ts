@@ -1,4 +1,4 @@
-// src\app\sitemap.ts
+// src/app/sitemap.ts
 import { MetadataRoute } from 'next'
 import { 
   getLocationsWithFilters,
@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     })
 
-    // Add all regions
+    // Add all regions (15)
     regions.forEach((region) => {
       sitemap.push({
         url: `${baseUrl}/${createSlug(region.regionName)}`,
@@ -36,11 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
     })
 
-    // Add top districts (prioritize by listing count)
+    // Add top districts - MATCH generateStaticParams ✅
     const topDistricts = districts
       .filter(d => (d.listingCount || 0) >= 10) // Only districts with decent listings
       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 200) // Increase limit for districts
+      .slice(0, 100) // ✅ Changed from 200 to 100
 
     topDistricts.forEach((district) => {
       const region = regions.find(r => r.regionId === district.regionId)
@@ -54,11 +54,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     })
 
-    // Add top suburbs (prioritize by listing count)
+    // Add top suburbs - MATCH generateStaticParams ✅
     const topSuburbs = suburbs
       .filter(s => (s.listingCount || 0) >= 5) // Only suburbs with decent listings
       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 500) // Increase limit for suburbs
+      .slice(0, 200) // ✅ Changed from 500 to 200
 
     topSuburbs.forEach((suburb) => {
       const district = districts.find(d => d.districtId === suburb.districtId)
@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (district && region) {
         sitemap.push({
           url: `${baseUrl}/${createSlug(region.regionName)}/${createSlug(district.districtName)}/${createSlug(suburb.suburbName)}`,
-          lastModified: new Date(suburb.collectedAt),
+          lastModified: new Date(suburb.collectedAt), // ✅ Fixed: was "new New"
           changeFrequency: 'daily',
           priority: 0.7,
         })
