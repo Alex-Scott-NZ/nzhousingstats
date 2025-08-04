@@ -1,11 +1,12 @@
 // src\app\layout.tsx
 import type { Metadata } from "next";
-import { Kalam } from "next/font/google";
+import { Space_Grotesk } from "next/font/google"; 
 import "./globals.css";
 
-const kalam = Kalam({
-  weight: ['300', '400', '700'],
+const spaceGrotesk = Space_Grotesk({ 
+  weight: ['300', '400', '500', '600', '700'],
   subsets: ["latin"],
+  variable: '--font-space-grotesk', // ✅ Add CSS variable
 });
 
 export const metadata: Metadata = {
@@ -128,7 +129,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${kalam.className} antialiased`}>
+      <body className={`${spaceGrotesk.variable} ${spaceGrotesk.className} antialiased`}>
         {children}
       </body>
     </html>

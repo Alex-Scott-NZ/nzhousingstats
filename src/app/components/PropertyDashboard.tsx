@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { createSlug } from "../../lib/slugs"; // Add this import
+import { createSlug } from "../../lib/slugs";
 import styles from "./PropertyDashboard.module.scss";
 
 const LISTING_TYPE = "HOUSES_TO_BUY";
@@ -180,7 +180,6 @@ export default function PropertyDashboard({
   const currentListingData: ListingTypeData = allData[LISTING_TYPE];
   const totals: TotalsData | null = currentListingData?.totals;
 
-  // ... (keep all the existing data processing functions unchanged)
   const getTrendData = (
     selectedRegionId: number | null,
     selectedDistrictId: number | null,
@@ -729,21 +728,17 @@ export default function PropertyDashboard({
     return "Unknown";
   };
 
-  // ✅ UPDATED: Helper function to generate slug-based URLs for table items
   const getItemUrl = (item: DatabaseLocationSnapshot): string => {
     if (currentLevel === "region") {
-      // Region level: /auckland
       return `/${createSlug(item.regionName)}`;
     }
     if (currentLevel === "district") {
-      // District level: /auckland/auckland-city
       const region = availableRegions.find((r) => r.id === item.regionId);
       if (region) {
         return `/${createSlug(region.name)}/${createSlug(item.districtName!)}`;
       }
     }
     if (currentLevel === "suburb") {
-      // Suburb level: /auckland/auckland-city/mount-wellington
       const district = availableDistricts.find((d) => d.id === item.districtId);
       const region = availableRegions.find((r) => r.id === item.regionId);
       if (district && region) {
@@ -755,7 +750,6 @@ export default function PropertyDashboard({
     return "#";
   };
 
-  // ✅ UPDATED: Helper function to get breadcrumb URLs
   const getRegionUrl = (): string => {
     if (selectedRegionName) {
       return `/${createSlug(selectedRegionName)}`;
@@ -796,9 +790,9 @@ export default function PropertyDashboard({
       <div className={styles["sketch-box"]}>
         <div className="p-4 sm:p-6 pb-3 sm:pb-4">
           <h1
-            className={`text-2xl sm:text-3xl font-bold text-left text-gray-800 ${styles["yellow-highlight"]} relative`}
+            className={`text-2xl sm:text-3xl font-bold text-left text-gray-800 ${styles["yellow-highlight"]} relative uppercase`}
           >
-            Property Listings Tracker ✏️
+            🏠 PROPERTY LISTINGS TRACKER
           </h1>
         </div>
         <div className="px-4 sm:px-6 pb-3 sm:pb-4 border-t border-dashed border-gray-300">
@@ -820,7 +814,7 @@ export default function PropertyDashboard({
         </div>
       </div>
 
-      {/* ✅ UPDATED: Breadcrumb with slug-based Links */}
+      {/* Breadcrumb */}
       <div className={styles["sketch-box"]}>
         <div className="p-3 sm:p-4 pb-2 sm:pb-3 text-sm sm:text-base bg-[#fe90e8]">
           <Link
@@ -873,9 +867,7 @@ export default function PropertyDashboard({
         <div className="p-4 sm:p-6 lg:p-10">
           <div className="mb-6 sm:mb-8 pb-2">
             <div>
-              <h2
-                className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-800 ${styles["yellow-highlight"]} relative uppercase`}
-              >
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-800 relative uppercase">
                 📊{" "}
                 <span className="underline decoration-double">
                   {selectedSuburbName
@@ -892,8 +884,7 @@ export default function PropertyDashboard({
 
           {/* Summary Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-10">
-            <div className="bg-white p-4 sm:p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_#333] relative shadow-[2px_2px_0px_#333]">
-              <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
+            <div className="bg-white p-4 sm:p-6 border-4 border-black text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[8px_8px_0px_#000] relative shadow-[4px_4px_0px_#000]">
               <div className="text-3xl sm:text-4xl font-bold mb-2 underline decoration-double text-gray-800">
                 {filteredTotals?.total.toLocaleString() ||
                   totals.total.toLocaleString()}
@@ -903,14 +894,13 @@ export default function PropertyDashboard({
                   ? `${filteredTotals.locationName} Listings`
                   : "Total Listings"}
               </div>
-              <div className="text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white bg-gradient-to-r from-emerald-600 to-emerald-500">
+              <div className="text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border-2 border-black text-black bg-[#13b99d] uppercase">
                 <span>↗</span>
                 <span>Houses for Sale</span>
               </div>
             </div>
 
-            <div className="bg-white p-4 sm:p-6 border-2 border-gray-800 text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[6px_6px_0px_#333] relative shadow-[2px_2px_0px_#333]">
-              <div className="absolute top-1 left-1 right-1 bottom-1 border border-dashed border-gray-300 pointer-events-none"></div>
+            <div className="bg-white p-4 sm:p-6 border-4 border-black text-center transition-all hover:transform hover:-translate-y-2 hover:shadow-[8px_8px_0px_#000] relative shadow-[4px_4px_0px_#000]">
               <div className="text-3xl sm:text-4xl font-bold mb-2 underline decoration-double text-gray-800">
                 {changeMetrics
                   ? (changeMetrics.change > 0 ? "+" : "") +
@@ -921,10 +911,10 @@ export default function PropertyDashboard({
                 Trend Change
               </div>
               <div
-                className={`text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border border-gray-800 text-white ${
+                className={`text-sm sm:text-base font-bold flex items-center justify-center gap-2 px-3 py-2 border-2 border-black text-black uppercase ${
                   changeMetrics?.deltaType === "increase"
-                    ? "bg-gradient-to-r from-emerald-600 to-emerald-500"
-                    : "bg-gradient-to-r from-red-500 to-red-600"
+                    ? "bg-[#13b99d]"
+                    : "bg-[#ff4910]"
                 }`}
               >
                 <span>
@@ -941,7 +931,7 @@ export default function PropertyDashboard({
 
           {/* Chart Container */}
           <div className="bg-white border-2 border-gray-800 p-3 sm:p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
-            <div className="absolute -top-4 left-3 sm:left-5 bg-white px-2 font-bold border-2 border-gray-800 text-gray-800 uppercase text-sm sm:text-base">
+            <div className="absolute -top-4 left-3 sm:left-5 bg-[#7dfaff] px-2 font-bold border-2 border-gray-800 text-black uppercase text-sm sm:text-base">
               {selectedSuburbName ||
                 selectedDistrictName ||
                 selectedRegionName ||
@@ -1034,13 +1024,11 @@ export default function PropertyDashboard({
         </div>
       </div>
 
-      {/* ✅ UPDATED: Results Table with slug-based navigation */}
+      {/* Results Table */}
       {!selectedSuburbId && (
         <div className={styles["sketch-box"]}>
-          <div className="bg-gray-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(0,0,0,0.03)_10px,rgba(0,0,0,0.03)_20px)] p-6 border-b-2 border-gray-800">
-            <h3
-              className={`text-2xl font-bold text-gray-800 ${styles["yellow-highlight"]} relative`}
-            >
+          <div className="p-6 border-b-2 border-gray-800">
+            <h3 className="text-2xl font-bold text-gray-800 relative">
               📋 {levelName}s by Listings
               {selectedRegionName && ` in ${selectedRegionName}`}
               {selectedDistrictName && ` in ${selectedDistrictName}`}
@@ -1052,7 +1040,7 @@ export default function PropertyDashboard({
               <thead>
                 <tr>
                   <th
-                    className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
+                    className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
                     onClick={() => handleSort("name")}
                   >
                     <div className="flex items-center space-x-1">
@@ -1061,7 +1049,7 @@ export default function PropertyDashboard({
                     </div>
                   </th>
                   <th
-                    className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
+                    className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
                     onClick={() => handleSort("listingCount")}
                   >
                     <div className="flex items-center space-x-1">
@@ -1069,16 +1057,16 @@ export default function PropertyDashboard({
                       <SortIndicator column="listingCount" />
                     </div>
                   </th>
-                  <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
+                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
                     % of Total
                   </th>
-                  <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
+                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
                     1 Week
                   </th>
-                  <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
+                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
                     1 Month
                   </th>
-                  <th className="p-5 text-left bg-gray-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(0,0,0,0.03)_5px,rgba(0,0,0,0.03)_10px)] font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide text-gray-800">
+                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide text-gray-800">
                     Trend
                   </th>
                 </tr>
@@ -1158,8 +1146,8 @@ export default function PropertyDashboard({
                               style={{
                                 color:
                                   trends.weekChange >= 0
-                                    ? "#059669"
-                                    : "#dc2626",
+                                    ? "#13b99d" // ✅ Brutalist teal
+                                    : "#ff4910", // ✅ Brutalist orange
                               }}
                             >
                               <span className="font-bold">
@@ -1218,14 +1206,12 @@ export default function PropertyDashboard({
         </div>
       )}
 
-      {/* ✅ UPDATED: Suburb details with slug-based back navigation */}
+      {/* Suburb details */}
       {selectedSuburbId && (
         <div className={styles["sketch-box"]}>
           <div className="p-8 text-center">
             <div className="text-6xl mb-4">🏘️</div>
-            <h3
-              className={`text-2xl font-bold mb-4 text-gray-800 ${styles["yellow-highlight"]} relative`}
-            >
+            <h3 className="text-2xl font-bold mb-4 text-gray-800 relative">
               Suburb Level Detail
             </h3>
             <p className="text-lg mb-2 text-gray-500">

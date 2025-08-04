@@ -1,11 +1,20 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 
 body {
   background: #ffffff;
   color: #171717;
+  font-family: 'Space Grotesk', monospace; /* ✅ Apply brutalist font globally */
+  font-weight: 500; /* ✅ Make it bolder by default */
+  letter-spacing: 0.025em; /* ✅ Slight spacing for that technical feel */
 }
 
-/* Add this to your globals.css if it's not already there */
-.font-kalam {
-  font-family: var(--font-kalam), cursive;
+/* ✅ Make all text more brutalist */
+* {
+  font-family: 'Space Grotesk', monospace !important;
+}
+
+/* ✅ Override the font class to ensure it works */
+.font-space-grotesk {
+  font-family: 'Space Grotesk', monospace !important;
 }

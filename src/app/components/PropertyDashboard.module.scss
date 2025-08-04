@@ -1,31 +1,28 @@
 /* src\app\components\PropertyDashboard.module.scss */
 
-/* Complex box styling with pseudo-elements */
+/* ✅ Brutalist Color Palette */
+$yellow: #ffec00;
+$blue: #3300ff;
+$cyan: #7dfaff;
+$orange: #ff4910;
+$teal: #13b99d;
+$magenta: #ff01f6;
+
+/* ✅ Slightly thinner brutalist box styling */
 .sketch-box {
   background: white;
-  border: 3px solid #333;
+  border: 4px solid #000;
   border-radius: 0;
-  box-shadow: 3px 3px 0px #333;
+  box-shadow: 6px 6px 0px #000;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
-.sketch-box::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border: 2px dashed #666;
-  pointer-events: none;
-  opacity: 0.3;
-}
-
-/* Complex highlight effect with pseudo-element */
+/* ✅ Keep the highlight clean and simple */
 .yellow-highlight {
   position: relative;
   display: inline-block;
+  z-index: 1;
 }
 
 .yellow-highlight::before {
@@ -34,38 +31,38 @@
   top: 50%;
   left: -8px;
   right: -12px;
-  height: 20px;
-  background: linear-gradient(45deg, #FFD700 0%, #FFED4A 25%, #FFD700 50%, #FFED4A 75%, #FFD700 100%);
+  height: 50px;
+  background: $yellow;
   transform: translateY(-50%) rotate(-1deg);
   z-index: -1;
-  opacity: 0.7;
+  opacity: 0.8;
   border-radius: 3px;
 }
 
-/* Custom animation */
+/* ✅ Brutalist status dot */
 .status-dot {
-  width: 10px;
-  height: 10px;
-  background: #10B981;
-  border: 2px solid #333;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
+  width: 14px;
+  height: 14px;
+  background: $teal;
+  border: 4px solid #000;
+  border-radius: 0;
+  animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
   50% {
-    opacity: 0.7;
-    transform: scale(1.1);
+    opacity: 0.6;
+    transform: scale(1.2) rotate(3deg);
   }
 }
 
-/* Complex interactive underline effect */
+/* ✅ Update clickable links to use brutalist blue */
 .clickable-location {
-  color: #2563eb !important;
+  color: $blue !important; /* ✅ Brutalist blue */
   font-weight: 700 !important;
   cursor: pointer;
   text-decoration: none;
@@ -80,14 +77,14 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: #2563eb;
+    background-color: $blue; /* ✅ Brutalist blue */
     transform: scaleX(1);
     transform-origin: left;
     transition: transform 0.2s ease;
   }
   
   &:hover {
-    color: #1d4ed8 !important;
+    color: darken($blue, 10%) !important; /* ✅ Darker blue on hover */
     
     &::after {
       transform: scaleX(0);
@@ -95,7 +92,7 @@
   }
 }
 
-/* Complex row hover effect */
+/* ✅ Keep original table row hover - NO CHANGES */
 .table-row {
   transition: all 0.2s ease;
   
@@ -106,7 +103,7 @@
     z-index: 10;
     
     .clickable-location {
-      color: #1d4ed8 !important;
+      color: darken($blue, 10%) !important; /* ✅ Darker blue on hover */
       
       &::after {
         transform: scaleX(0);
