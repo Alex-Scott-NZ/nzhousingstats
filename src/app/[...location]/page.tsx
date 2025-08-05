@@ -301,6 +301,8 @@ export default async function LocationPage({ params }: Props) {
   }
 }
 
+export const revalidate = 300; 
+
 export async function generateStaticParams(): Promise<StaticParam[]> {
   try {
     const [regions, districts, suburbs] = await Promise.all([
