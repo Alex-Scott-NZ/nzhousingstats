@@ -33,16 +33,17 @@ const nextConfig: NextConfig = {
     if (!isServer) {
       config.devtool = dev ? 'eval-source-map' : 'source-map';
       
-      // ADD THIS - Force source map generation for ALL chunks
+      // Force source map generation for ALL chunks
       config.output = {
         ...config.output,
         sourceMapFilename: '[file].map',
       };
       
-      // ADD THIS - Ensure optimization doesn't break source maps
+      // TypeScript-safe way to handle TerserPlugin
       if (config.optimization?.minimizer) {
-        config.optimization.minimizer.forEach((minimizer) => {
+        config.optimization.minimizer.forEach((minimizer: any) => {
           if (minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options = minimizer.options || {};
             minimizer.options.sourceMap = true;
           }
         });
