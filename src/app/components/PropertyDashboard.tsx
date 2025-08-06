@@ -1,7 +1,7 @@
 // src\app\components\PropertyDashboard.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +17,9 @@ import { createSlug } from "../../lib/slugs";
 import styles from "./PropertyDashboard.module.scss";
 
 const LISTING_TYPE = "HOUSES_TO_BUY";
+
+// Add isomorphic layout effect hook
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface TotalsData {
   total: number;
@@ -168,6 +171,14 @@ export default function PropertyDashboard({
 }: PropertyDashboardProps) {
   const router = useRouter();
 
+  // Add hydration protection
+  const [mounted, setMounted] = useState(false);
+
+  // Use isomorphic effect for hydration
+  useIsomorphicLayoutEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Use initial props for display, but don't allow state changes (navigation handles that)
   const [selectedRegionId] = useState<number | null>(initialRegionId || null);
   const [selectedDistrictId] = useState<number | null>(
@@ -181,6 +192,23 @@ export default function PropertyDashboard({
 
   const currentListingData: ListingTypeData = allData[LISTING_TYPE];
   const totals: TotalsData | null = currentListingData?.totals;
+
+  // Date formatting function with hydration protection
+  const formatDate = (dateString: string) => {
+    if (!mounted) {
+      // Return a static fallback during SSR
+      return new Date(dateString).toISOString().split('T')[0]; // Simple YYYY-MM-DD format
+    }
+    
+    // Client-side formatting
+    return new Date(dateString).toLocaleString("en-NZ", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const getTrendData = (
     selectedRegionId: number | null,
@@ -864,13 +892,7 @@ export default function PropertyDashboard({
               <span className="font-semibold uppercase tracking-wide">
                 LAST UPDATED:{" "}
                 <span className="font-bold text-gray-700">
-                  {new Date(totals.lastUpdated).toLocaleString("en-NZ", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatDate(totals.lastUpdated)}
                 </span>
               </span>
             </div>
@@ -1189,7 +1211,6 @@ export default function PropertyDashboard({
               </thead>
               <tbody>
                 {filteredDisplayData.map(
-                  // ✅ Changed from displayData to filteredDisplayData
                   (item: DatabaseLocationSnapshot, index: number) => {
                     const name: string = getCurrentLocationName(item);
                     const isClickable =
