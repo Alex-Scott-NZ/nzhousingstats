@@ -341,82 +341,82 @@ export default async function LocationPage({ params }: Props) {
 
 export const revalidate = 300; 
 
-export async function generateStaticParams(): Promise<StaticParam[]> {
-  const staticStart = Date.now();
-  console.log('📊 Generating static params...');
+// export async function generateStaticParams(): Promise<StaticParam[]> {
+//   const staticStart = Date.now();
+//   console.log('📊 Generating static params...');
   
-  try {
-    const [regions, districts, suburbs] = await Promise.all([
-      getLocationsWithFilters({
-        listingType: "HOUSES_TO_BUY",
-        locationType: "region",
-      }),
-      getLocationsWithFilters({
-        listingType: "HOUSES_TO_BUY",
-        locationType: "district",
-      }),
-      getLocationsWithFilters({
-        listingType: "HOUSES_TO_BUY",
-        locationType: "suburb",
-      }),
-    ]);
+//   try {
+//     const [regions, districts, suburbs] = await Promise.all([
+//       getLocationsWithFilters({
+//         listingType: "HOUSES_TO_BUY",
+//         locationType: "region",
+//       }),
+//       getLocationsWithFilters({
+//         listingType: "HOUSES_TO_BUY",
+//         locationType: "district",
+//       }),
+//       getLocationsWithFilters({
+//         listingType: "HOUSES_TO_BUY",
+//         locationType: "suburb",
+//       }),
+//     ]);
 
-    const params: StaticParam[] = [];
+//     const params: StaticParam[] = [];
 
-    // Generate ALL region paths (there aren't that many)
-    regions.forEach((region) => {
-      params.push({
-        location: [createSlug(region.regionName)],
-      });
-    });
+//     // Generate ALL region paths (there aren't that many)
+//     regions.forEach((region) => {
+//       params.push({
+//         location: [createSlug(region.regionName)],
+//       });
+//     });
 
-    // Generate district paths - prioritize major areas
-    const majorDistricts = districts
-      .filter((d) => (d.listingCount || 0) >= 10)
-      .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 100);
+//     // Generate district paths - prioritize major areas
+//     const majorDistricts = districts
+//       .filter((d) => (d.listingCount || 0) >= 10)
+//       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
+//       .slice(0, 100);
 
-    majorDistricts.forEach((district) => {
-      const region = regions.find((r) => r.regionId === district.regionId);
-      if (region) {
-        params.push({
-          location: [
-            createSlug(region.regionName),
-            createSlug(district.districtName),
-          ],
-        });
-      }
-    });
+//     majorDistricts.forEach((district) => {
+//       const region = regions.find((r) => r.regionId === district.regionId);
+//       if (region) {
+//         params.push({
+//           location: [
+//             createSlug(region.regionName),
+//             createSlug(district.districtName),
+//           ],
+//         });
+//       }
+//     });
 
-    // Generate suburb paths - only major suburbs
-    const majorSuburbs = suburbs
-      .filter((s) => (s.listingCount || 0) >= 5)
-      .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 200);
+//     // Generate suburb paths - only major suburbs
+//     const majorSuburbs = suburbs
+//       .filter((s) => (s.listingCount || 0) >= 5)
+//       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
+//       .slice(0, 200);
 
-    majorSuburbs.forEach((suburb) => {
-      const district = districts.find(
-        (d) => d.districtId === suburb.districtId
-      );
-      const region = regions.find((r) => r.regionId === suburb.regionId);
+//     majorSuburbs.forEach((suburb) => {
+//       const district = districts.find(
+//         (d) => d.districtId === suburb.districtId
+//       );
+//       const region = regions.find((r) => r.regionId === suburb.regionId);
 
-      if (district && region) {
-        params.push({
-          location: [
-            createSlug(region.regionName),
-            createSlug(district.districtName),
-            createSlug(suburb.suburbName),
-          ],
-        });
-      }
-    });
+//       if (district && region) {
+//         params.push({
+//           location: [
+//             createSlug(region.regionName),
+//             createSlug(district.districtName),
+//             createSlug(suburb.suburbName),
+//           ],
+//         });
+//       }
+//     });
 
-    console.log(
-      `📊 Generated ${params.length} static params in ${Date.now() - staticStart}ms`
-    );
-    return params;
-  } catch (error) {
-    console.error("❌ Error generating static params:", error);
-    return [];
-  }
-}
+//     console.log(
+//       `📊 Generated ${params.length} static params in ${Date.now() - staticStart}ms`
+//     );
+//     return params;
+//   } catch (error) {
+//     console.error("❌ Error generating static params:", error);
+//     return [];
+//   }
+// }
