@@ -13,59 +13,112 @@ import PropertyDashboard from "../components/PropertyDashboard";
 import StructuredData from "../components/StructuredData";
 
 interface Props {
-  params: Promise<{ location: string[] }>; // ✅ Updated to Promise
+  params: Promise<{ location: string[] }>;
 }
 
-// Add proper type for static params
 interface StaticParam {
   location: string[];
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { location } = await params;
-  const [regionSlug, districtSlug, suburbSlug] = location || [];
+// 🚀 OPTIMIZATION: Cache data to avoid duplicate fetching
+let dataCache: {
+  data: any;
+  timestamp: number;
+  key: string;
+} | null = null;
 
-  try {
-    const [housesToBuyData] = await Promise.all([
-      Promise.all([
-        getTotalsByLocationType("HOUSES_TO_BUY"),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "region",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "district",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "suburb",
-        }),
-      ]),
-    ]);
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-    const allData = {
+async function getCachedData(cacheKey: string) {
+  const now = Date.now();
+  
+  // Return cached data if it's fresh and matches the key
+  if (dataCache && 
+      dataCache.key === cacheKey && 
+      (now - dataCache.timestamp) < CACHE_DURATION) {
+    console.log(`📊 Using cached data for ${cacheKey}`);
+    return dataCache.data;
+  }
+
+  console.log(`📊 Fetching fresh data for ${cacheKey}`);
+  const fetchStart = Date.now();
+  
+  // Fetch fresh data
+  const [housesToBuyData, snapshots, historicalData] = await Promise.all([
+    Promise.all([
+      getTotalsByLocationType("HOUSES_TO_BUY"),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "region",
+      }),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "district",
+      }),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "suburb",
+      }),
+    ]),
+    getLatestSnapshots(),
+    getHistoricalSnapshots("HOUSES_TO_BUY"),
+  ]);
+
+  const data = {
+    housesToBuyData,
+    snapshots,
+    historicalData,
+    allData: {
       HOUSES_TO_BUY: {
         totals: housesToBuyData[0],
         regions: housesToBuyData[1],
         districts: housesToBuyData[2],
         suburbs: housesToBuyData[3],
       },
-    };
+    }
+  };
 
+  // Cache the data
+  dataCache = {
+    data,
+    timestamp: now,
+    key: cacheKey
+  };
+
+  console.log(`📊 Data fetch completed in ${Date.now() - fetchStart}ms`);
+  return data;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const metadataStart = Date.now();
+  const { location } = await params;
+  const [regionSlug, districtSlug, suburbSlug] = location || [];
+  
+  // Create cache key (same for metadata and page)
+  const cacheKey = location?.join('/') || 'root';
+  console.log(`🔍 Generating metadata for: ${cacheKey}`);
+
+  try {
+    const { allData } = await getCachedData(cacheKey);
+
+    const slugStart = Date.now();
     const locationData = findLocationBySlug(
       allData,
       regionSlug,
       districtSlug,
       suburbSlug
     );
+    console.log(`📊 Metadata slug lookup: ${Date.now() - slugStart}ms`);
 
     if (!locationData) {
+      console.log(`❌ Location not found: ${cacheKey}`);
       return { title: "Location Not Found" };
     }
 
     const { region, district, suburb } = locationData;
     const urlPath = location.join("/");
+
+    console.log(`📊 Total metadata generation: ${Date.now() - metadataStart}ms`);
 
     // Generate metadata based on location level
     if (suburb) {
@@ -96,7 +149,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           locale: "en_NZ",
           type: "website",
           images: [
-            // ✅ Add images
             {
               url: "https://nzhousingstats.madebyalex.dev/og-image.jpg",
               width: 1200,
@@ -111,7 +163,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           description: `${listingCount.toLocaleString()} houses for sale in ${
             suburb.suburbName
           }`,
-          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"], // ✅ Add image
+          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"],
         },
       };
     } else if (district) {
@@ -142,7 +194,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           locale: "en_NZ",
           type: "website",
           images: [
-            // ✅ Add images
             {
               url: "https://nzhousingstats.madebyalex.dev/og-image.jpg",
               width: 1200,
@@ -157,7 +208,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           description: `${listingCount.toLocaleString()} houses for sale in ${
             district.districtName
           }`,
-          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"], // ✅ Add image
+          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"],
         },
       };
     } else {
@@ -184,7 +235,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           locale: "en_NZ",
           type: "website",
           images: [
-            // ✅ Add images
             {
               url: "https://nzhousingstats.madebyalex.dev/og-image.jpg",
               width: 1200,
@@ -199,48 +249,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           description: `${listingCount.toLocaleString()} houses for sale in ${
             region.regionName
           }`,
-          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"], // ✅ Add image
+          images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"],
         },
       };
     }
   } catch (error) {
+    console.error(`❌ Metadata generation failed for ${cacheKey}:`, error);
     return { title: "Location Not Found" };
   }
 }
 
 export default async function LocationPage({ params }: Props) {
-  const { location } = await params; // ✅ Await params
+  const pageStart = Date.now();
+  const { location } = await params;
   const [regionSlug, districtSlug, suburbSlug] = location || [];
+  
+  const cacheKey = location?.join('/') || 'root';
+  console.log(`🏠 Loading location page: ${cacheKey}`);
 
   try {
-    // Get all data
-    const [housesToBuyData, snapshots, historicalData] = await Promise.all([
-      Promise.all([
-        getTotalsByLocationType("HOUSES_TO_BUY"),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "region",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "district",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "suburb",
-        }),
-      ]),
-      getLatestSnapshots(),
-      getHistoricalSnapshots("HOUSES_TO_BUY"),
-    ]);
+    // 🚀 Use cached data (no duplicate fetching!)
+    const { allData, snapshots, historicalData } = await getCachedData(cacheKey);
 
-    const allData = {
-      HOUSES_TO_BUY: {
-        totals: housesToBuyData[0],
-        regions: housesToBuyData[1],
-        districts: housesToBuyData[2],
-        suburbs: housesToBuyData[3],
-      },
+    // Add HOUSES_TO_RENT placeholder
+    const fullData = {
+      ...allData,
       HOUSES_TO_RENT: {
         totals: {
           total: 0,
@@ -255,14 +288,17 @@ export default async function LocationPage({ params }: Props) {
       },
     };
 
+    const slugStart = Date.now();
     const locationData = findLocationBySlug(
       allData,
       regionSlug,
       districtSlug,
       suburbSlug
     );
+    console.log(`📊 Page slug lookup: ${Date.now() - slugStart}ms`);
 
     if (!locationData) {
+      console.log(`❌ Location not found: ${cacheKey}`);
       notFound();
     }
 
@@ -272,6 +308,8 @@ export default async function LocationPage({ params }: Props) {
       district?.listingCount ||
       region?.listingCount ||
       0;
+
+    console.log(`📊 Total location page generation: ${Date.now() - pageStart}ms`);
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -284,7 +322,7 @@ export default async function LocationPage({ params }: Props) {
         <main className="max-w-7xl mx-auto py-6 px-4">
           <Suspense fallback={<div>Loading...</div>}>
             <PropertyDashboard
-              allData={allData}
+              allData={fullData}
               snapshots={snapshots}
               historicalData={historicalData}
               initialRegionId={region.regionId}
@@ -296,7 +334,7 @@ export default async function LocationPage({ params }: Props) {
       </div>
     );
   } catch (error) {
-    console.error("Error loading location page:", error);
+    console.error(`❌ Location page error for ${cacheKey}:`, error);
     notFound();
   }
 }
@@ -304,6 +342,9 @@ export default async function LocationPage({ params }: Props) {
 export const revalidate = 300; 
 
 export async function generateStaticParams(): Promise<StaticParam[]> {
+  const staticStart = Date.now();
+  console.log('📊 Generating static params...');
+  
   try {
     const [regions, districts, suburbs] = await Promise.all([
       getLocationsWithFilters({
@@ -331,9 +372,9 @@ export async function generateStaticParams(): Promise<StaticParam[]> {
 
     // Generate district paths - prioritize major areas
     const majorDistricts = districts
-      .filter((d) => (d.listingCount || 0) >= 10) // Only districts with decent listings
+      .filter((d) => (d.listingCount || 0) >= 10)
       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 100); // Top 100 districts
+      .slice(0, 100);
 
     majorDistricts.forEach((district) => {
       const region = regions.find((r) => r.regionId === district.regionId);
@@ -349,9 +390,9 @@ export async function generateStaticParams(): Promise<StaticParam[]> {
 
     // Generate suburb paths - only major suburbs
     const majorSuburbs = suburbs
-      .filter((s) => (s.listingCount || 0) >= 5) // Only suburbs with decent listings
+      .filter((s) => (s.listingCount || 0) >= 5)
       .sort((a, b) => (b.listingCount || 0) - (a.listingCount || 0))
-      .slice(0, 200); // Top 200 suburbs
+      .slice(0, 200);
 
     majorSuburbs.forEach((suburb) => {
       const district = districts.find(
@@ -371,11 +412,11 @@ export async function generateStaticParams(): Promise<StaticParam[]> {
     });
 
     console.log(
-      `📊 Generated ${params.length} static params for pre-rendering`
+      `📊 Generated ${params.length} static params in ${Date.now() - staticStart}ms`
     );
     return params;
   } catch (error) {
-    console.error("Error generating static params:", error);
+    console.error("❌ Error generating static params:", error);
     return [];
   }
 }

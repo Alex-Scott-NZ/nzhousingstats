@@ -416,12 +416,17 @@ export async function getLocationsWithFilters(filters: {
   locationType: "region" | "district" | "suburb";
   limit?: number;
 }) {
+  const queryStart = Date.now();
   const { listingType, locationType, limit = 5000 } = filters;
+  
+  console.log(`📊 Starting getLocationsWithFilters(${locationType}) for ${listingType}...`);
 
   if (locationType === "region") {
+    const regionStart = Date.now();
     const results = await getRegionTotals(listingType, limit);
-    // Map to expected property names
-    return results.map((r) => ({
+    console.log(`📊 Region totals query: ${Date.now() - regionStart}ms`);
+    
+    const mappedResults = results.map((r) => ({
       id: r.region_id,
       regionId: r.region_id,
       regionName: r.region_name,
@@ -435,9 +440,13 @@ export async function getLocationsWithFilters(filters: {
       listingType: listingType,
       collectedAt: new Date().toISOString(),
     }));
+    
+    console.log(`📊 getLocationsWithFilters(${locationType}) completed in ${Date.now() - queryStart}ms (${mappedResults.length} results)`);
+    return mappedResults;
   }
 
   if (locationType === "district") {
+    const districtStart = Date.now();
     const results = (await db.all(sql`
       SELECT 
         d.name as district_name,
@@ -463,9 +472,9 @@ export async function getLocationsWithFilters(filters: {
       ORDER BY total_listings DESC
       LIMIT ${limit}
     `)) as any[];
+    console.log(`📊 District query: ${Date.now() - districtStart}ms`);
 
-    // Map to expected property names
-    return results.map((d) => ({
+    const mappedResults = results.map((d) => ({
       id: d.district_id,
       regionId: d.region_id,
       regionName: d.region_name,
@@ -479,9 +488,13 @@ export async function getLocationsWithFilters(filters: {
       listingType: listingType,
       collectedAt: new Date().toISOString(),
     }));
+    
+    console.log(`📊 getLocationsWithFilters(${locationType}) completed in ${Date.now() - queryStart}ms (${mappedResults.length} results)`);
+    return mappedResults;
   }
 
   if (locationType === "suburb") {
+    const suburbStart = Date.now();
     const results = (await db.all(sql`
       SELECT 
         s.name as suburb_name,
@@ -507,9 +520,9 @@ export async function getLocationsWithFilters(filters: {
       ORDER BY sl.listing_count DESC
       LIMIT ${limit}
     `)) as any[];
+    console.log(`📊 Suburb query: ${Date.now() - suburbStart}ms`);
 
-    // Map to expected property names
-    return results.map((s) => ({
+    const mappedResults = results.map((s) => ({
       id: s.suburb_id,
       regionId: s.region_id,
       regionName: s.region_name,
@@ -523,15 +536,25 @@ export async function getLocationsWithFilters(filters: {
       listingType: listingType,
       collectedAt: new Date().toISOString(),
     }));
+    
+    console.log(`📊 getLocationsWithFilters(${locationType}) completed in ${Date.now() - queryStart}ms (${mappedResults.length} results)`);
+    return mappedResults;
   }
 
+  console.log(`📊 getLocationsWithFilters(${locationType}) completed in ${Date.now() - queryStart}ms (no results)`);
   return [];
 }
 
 /**
  * Get historical snapshots for trend analysis - FIXED VERSION
  */
+/**
+ * Get historical snapshots for trend analysis - WITH TIMING
+ */
 export async function getHistoricalSnapshots(listingType: ListingType, limit?: number) {
+  const queryStart = Date.now();
+  console.log(`📊 Starting historical snapshots query for ${listingType}...`);
+
   const results = await db.all(sql`
     WITH historical_data AS (
       -- National totals (for main chart when no region selected)
@@ -593,7 +616,7 @@ export async function getHistoricalSnapshots(listingType: ListingType, limit?: n
       
       UNION ALL
       
-      -- 🆕 Individual suburb data (for when suburb is selected)
+      -- Individual suburb data (for when suburb is selected)
       SELECT 
         s.id,
         s.snapshot_date,
@@ -616,5 +639,6 @@ export async function getHistoricalSnapshots(listingType: ListingType, limit?: n
     ${limit ? sql`LIMIT ${limit}` : sql``}
   `) as any[];
 
+  console.log(`📊 Historical snapshots query completed in ${Date.now() - queryStart}ms (${results.length} records)`);
   return results;
 }

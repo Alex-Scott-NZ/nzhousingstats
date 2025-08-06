@@ -10,6 +10,8 @@ import {
 import PropertyDashboard from "./components/PropertyDashboard";
 import HomepageStructuredData from "./components/StructuredData";
 
+export const revalidate = 300; 
+
 export const metadata: Metadata = {
   title: "NZ Housing Stats - New Zealand Property Market Data & Trends",
   description:
@@ -26,7 +28,6 @@ export const metadata: Metadata = {
     locale: "en_NZ",
     type: "website",
     images: [
-      // ✅ Add the images back here
       {
         url: "https://nzhousingstats.madebyalex.dev/og-image.jpg",
         width: 1200,
@@ -39,34 +40,45 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "NZ Housing Stats",
     description: "Real-time New Zealand property market data and trends",
-    images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"], // ✅ Add the image back here
+    images: ["https://nzhousingstats.madebyalex.dev/og-image.jpg"],
   },
 };
 
 export default async function HomePage() {
+  const pageStart = Date.now();
   console.log("🏠 Loading property market data...");
 
   try {
-    // Get data for HOUSES_TO_BUY plus historical trends
-    const [housesToBuyData, snapshots, historicalData] = await Promise.all([
-      Promise.all([
-        getTotalsByLocationType("HOUSES_TO_BUY"),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "region",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "district",
-        }),
-        getLocationsWithFilters({
-          listingType: "HOUSES_TO_BUY",
-          locationType: "suburb",
-        }),
-      ]),
-      getLatestSnapshots(),
-      getHistoricalSnapshots("HOUSES_TO_BUY"),
+    // Time each major data fetch
+    const dataStart = Date.now();
+    
+    const housesToBuyStart = Date.now();
+    const housesToBuyData = await Promise.all([
+      getTotalsByLocationType("HOUSES_TO_BUY"),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "region",
+      }),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "district",
+      }),
+      getLocationsWithFilters({
+        listingType: "HOUSES_TO_BUY",
+        locationType: "suburb",
+      }),
     ]);
+    console.log(`📊 Houses data: ${Date.now() - housesToBuyStart}ms`);
+
+    const snapshotsStart = Date.now();
+    const snapshots = await getLatestSnapshots();
+    console.log(`📊 Snapshots: ${Date.now() - snapshotsStart}ms`);
+
+    const historicalStart = Date.now();
+    const historicalData = await getHistoricalSnapshots("HOUSES_TO_BUY");
+    console.log(`📊 Historical: ${Date.now() - historicalStart}ms`);
+
+    console.log(`📊 Total data fetch: ${Date.now() - dataStart}ms`);
 
     // Structure the data for the component
     const allData = {
@@ -99,6 +111,8 @@ export default async function HomePage() {
       suburbs: allData.HOUSES_TO_BUY.suburbs?.length || 0,
       historicalRecords: historicalData.length || 0,
     });
+
+    console.log(`📊 Total page generation: ${Date.now() - pageStart}ms`);
 
     return (
       <div className="min-h-screen bg-gray-50">
