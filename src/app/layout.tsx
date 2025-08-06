@@ -46,12 +46,17 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "unXZvzIsQ_cdAU8xQjcImiquCTXwd6m_MNjdA6CnotM",
+    other: {
+      "msvalidate.01": "B0757AE5EBBFAF54E821655817F59B4E",
+    },
   },
   // ✅ Add house emoji favicon
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
-    shortcut: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
-    apple: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
+    shortcut:
+      "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
+    apple:
+      "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
   },
 };
 
