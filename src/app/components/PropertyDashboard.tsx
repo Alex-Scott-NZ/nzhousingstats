@@ -93,7 +93,7 @@ interface ChartDataPoint {
   listings: number;
 }
 
-type SortColumn = "name" | "listingCount";
+type SortColumn = "name" | "listingCount" | "weekChange" | "monthChange";
 type SortOrder = "asc" | "desc";
 type LocationLevel = "region" | "district" | "suburb";
 
@@ -676,7 +676,13 @@ export default function PropertyDashboard({
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(column);
-      setSortOrder(column === "listingCount" ? "desc" : "asc");
+      setSortOrder(
+        column === "listingCount" ||
+          column === "weekChange" ||
+          column === "monthChange"
+          ? "desc"
+          : "asc"
+      );
     }
   };
 
@@ -710,8 +716,32 @@ export default function PropertyDashboard({
         if (sortBy === "listingCount") {
           aValue = a.listingCount || 0;
           bValue = b.listingCount || 0;
+        } else if (sortBy === "weekChange" || sortBy === "monthChange") {
+          // Get trend data for sorting
+          const aLocationId = selectedDistrictId
+            ? a.suburbId
+            : selectedRegionId
+            ? a.districtId
+            : a.regionId;
+          const bLocationId = selectedDistrictId
+            ? b.suburbId
+            : selectedRegionId
+            ? b.districtId
+            : b.regionId;
+
+          const aTrends = locationTrends[String(aLocationId)];
+          const bTrends = locationTrends[String(bLocationId)];
+
+          if (sortBy === "weekChange") {
+            aValue = aTrends?.weekChange || 0;
+            bValue = bTrends?.weekChange || 0;
+          } else {
+            // monthChange
+            aValue = aTrends?.monthChange || 0;
+            bValue = bTrends?.monthChange || 0;
+          }
         } else {
-          // FIX: Get the correct name property for sorting
+          // Name sorting
           if (currentLevel === "region") {
             aValue = a.regionName || "";
             bValue = b.regionName || "";
@@ -727,7 +757,11 @@ export default function PropertyDashboard({
           }
         }
 
-        if (sortBy === "listingCount") {
+        if (
+          sortBy === "listingCount" ||
+          sortBy === "weekChange" ||
+          sortBy === "monthChange"
+        ) {
           return sortOrder === "desc"
             ? (bValue as number) - (aValue as number)
             : (aValue as number) - (bValue as number);
@@ -740,7 +774,7 @@ export default function PropertyDashboard({
     );
 
     return sorted;
-  }, [currentDisplayData, sortBy, sortOrder, currentLevel]); // Add currentLevel dependency
+  }, [currentDisplayData, sortBy, sortOrder, currentLevel, locationTrends]);
 
   const filteredDisplayData = useMemo(() => {
     if (!searchTerm.trim() || currentLevel !== "suburb") {
@@ -825,8 +859,8 @@ export default function PropertyDashboard({
         </div>
         <div className="px-4 sm:px-6 pb-3 sm:pb-4 border-t border-dashed border-gray-300">
           <div className="text-xs flex items-baseline justify-between pt-3 text-gray-500">
-            <div className="flex items-baseline gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 border-2 border-black rounded-full animate-pulse"></div>
               <span className="font-semibold uppercase tracking-wide">
                 LAST UPDATED:{" "}
                 <span className="font-bold text-gray-700">
@@ -1130,11 +1164,23 @@ export default function PropertyDashboard({
                   <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
                     % of Total
                   </th>
-                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
-                    1 Week
+                  <th
+                    className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
+                    onClick={() => handleSort("weekChange")}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>1 Week</span>
+                      <SortIndicator column="weekChange" />
+                    </div>
                   </th>
-                  <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800">
-                    1 Month
+                  <th
+                    className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide border-r border-dashed border-gray-300 text-gray-800"
+                    onClick={() => handleSort("monthChange")}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>1 Month</span>
+                      <SortIndicator column="monthChange" />
+                    </div>
                   </th>
                   <th className="p-5 text-left bg-gray-50 font-bold text-lg cursor-pointer select-none transition-all hover:bg-gray-100 uppercase tracking-wide text-gray-800">
                     Trend
