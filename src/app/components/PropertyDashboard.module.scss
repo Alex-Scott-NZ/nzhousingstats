@@ -28,7 +28,7 @@ $magenta: #ff01f6;
 .yellow-highlight::before {
   content: '';
   position: absolute;
-  top: 50%;
+  top: 60%;
   left: -8px;
   right: -12px;
   height: 50px;
@@ -98,16 +98,57 @@ $magenta: #ff01f6;
   
   &:hover {
     background: #f8fafc;
-    transform: translateX(4px);
-    box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.1);
+    // Remove translateX completely
+    box-shadow: inset 4px 0px 0px #3300ff, 0px 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 10;
     
     .clickable-location {
-      color: darken($blue, 10%) !important; /* ✅ Darker blue on hover */
+      color: darken($blue, 10%) !important;
       
       &::after {
         transform: scaleX(0);
       }
     }
+  }
+}
+
+// Add this to the table container
+.overflow-x-auto {
+  &:hover {
+    overflow-x: hidden; // Hide scrollbar on table hover
+  }
+}
+
+// In PropertyDashboard.module.scss
+.house-icon {
+  display: inline-block;
+  font-size: 3rem;
+  margin-right: 0.75rem;
+  transition: all 0.3s ease;
+  
+  @media (min-width: 640px) {
+    font-size: 4rem;
+  }
+  
+  // Parent link hover triggers house animation
+  a:hover & {
+    animation: brutalist-bounce 0.6s ease-in-out;
+    transform: rotate(-5deg) scale(1.1);
+    filter: drop-shadow(4px 4px 0px #000);
+  }
+}
+
+@keyframes brutalist-bounce {
+  0%, 100% { 
+    transform: rotate(-5deg) scale(1.1);
+  }
+  25% { 
+    transform: rotate(-8deg) scale(1.15) translateY(-3px);
+  }
+  50% { 
+    transform: rotate(-2deg) scale(1.1) translateY(-1px);
+  }
+  75% { 
+    transform: rotate(-6deg) scale(1.12) translateY(-2px);
   }
 }
