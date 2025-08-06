@@ -24,7 +24,61 @@ const nextConfig: NextConfig = {
       ],
     };
   },
+  
+  // Force source maps in production
   productionBrowserSourceMaps: true,
+  
+  // Enhanced webpack config for better source maps
+  webpack: (config, { dev, isServer }) => {
+    if (!isServer) {
+      config.devtool = dev ? 'eval-source-map' : 'source-map';
+      
+      // ADD THIS - Force source map generation for ALL chunks
+      config.output = {
+        ...config.output,
+        sourceMapFilename: '[file].map',
+      };
+      
+      // ADD THIS - Ensure optimization doesn't break source maps
+      if (config.optimization?.minimizer) {
+        config.optimization.minimizer.forEach((minimizer) => {
+          if (minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options.sourceMap = true;
+          }
+        });
+      }
+    }
+    return config;
+  },
+
+  // Add headers for source maps
+  async headers() {
+    return [
+      {
+        source: '/_next/static/chunks/:path*.js.map',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*.map',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+        ],
+      },
+    ];
+  },
+
   experimental: {
     staleTimes: {
       dynamic: 300, // 5 minutes - matches your revalidate = 300
