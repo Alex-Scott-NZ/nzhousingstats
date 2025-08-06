@@ -5,17 +5,13 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 import cron from 'node-cron';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { collectPropertyData } from '../lib/data-collection.js';
 
-const execAsync = promisify(exec);
-
 console.log('🏠 NZ Housing Stats Data Collection Service Starting...');
-console.log(`⏰ Will collect data at 5:00 PM daily (NZ time)`);
+console.log(`⏰ Will collect data at 5:00 PM daily (NZ time)`); // ✅ Updated message
 console.log(`🕐 Started at: ${new Date().toISOString()}`);
 
-// Run at 5:00 PM every day NZ time: '0 17 * * *'
+// Run at 5:00 PM every day NZ time: '0 17 * * *' ✅ Updated cron expression
 const task = cron.schedule('0 17 * * *', async () => {
   const timestamp = new Date().toISOString();
   console.log(`\n🔄 Starting daily data collection at ${timestamp}`);
@@ -27,28 +23,6 @@ const task = cron.schedule('0 17 * * *', async () => {
     
     if (buyResult.success) {
       console.log(`✅ HOUSES_TO_BUY: ${buyResult.totalNzListings.toLocaleString()} listings across ${buyResult.totalRecords.toLocaleString()} locations stored`);
-      
-      // 🆕 Push updated database to GitHub
-      console.log('📤 Pushing updated database to GitHub...');
-      
-      try {
-        // Add the database file
-        await execAsync('git add data/nzhousingstats.db');
-        
-        // Commit with timestamp
-        const commitMessage = `Daily data update: ${new Date().toISOString().split('T')[0]}`;
-        await execAsync(`git commit -m "${commitMessage}"`);
-        
-        // Push to GitHub
-        await execAsync('git push origin main');
-        
-        console.log('✅ Database successfully pushed to GitHub');
-        
-      } catch (gitError) {
-        console.error('⚠️ Git push failed:', gitError.message);
-        console.log('📊 Data collection succeeded, but GitHub sync failed');
-      }
-      
     } else {
       console.error(`❌ HOUSES_TO_BUY failed: ${buyResult.error}`);
     }
@@ -61,7 +35,7 @@ const task = cron.schedule('0 17 * * *', async () => {
     // }
 
     console.log(`🎉 Daily data collection completed at ${new Date().toISOString()}`);
-    console.log(`📈 Next collection scheduled for tomorrow at 5:00 PM NZ time\n`);
+    console.log(`📈 Next collection scheduled for tomorrow at 5:00 PM NZ time\n`); // ✅ Updated message
     
   } catch (error) {
     console.error('💥 Data collection job failed:', error);
