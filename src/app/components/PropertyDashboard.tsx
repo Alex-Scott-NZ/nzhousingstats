@@ -177,6 +177,7 @@ export default function PropertyDashboard({
   const [sortBy, setSortBy] = useState<SortColumn>("listingCount");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const currentListingData: ListingTypeData = allData[LISTING_TYPE];
   const totals: TotalsData | null = currentListingData?.totals;
@@ -679,34 +680,6 @@ export default function PropertyDashboard({
     }
   };
 
-  const displayData = useMemo((): DatabaseLocationSnapshot[] => {
-    const sorted = [...currentDisplayData].sort(
-      (a: DatabaseLocationSnapshot, b: DatabaseLocationSnapshot) => {
-        let aValue: string | number, bValue: string | number;
-
-        if (sortBy === "listingCount") {
-          aValue = a.listingCount || 0;
-          bValue = b.listingCount || 0;
-        } else {
-          aValue = a.regionName || a.districtName || a.suburbName || "";
-          bValue = b.regionName || b.districtName || b.suburbName || "";
-        }
-
-        if (sortBy === "listingCount") {
-          return sortOrder === "desc"
-            ? (bValue as number) - (aValue as number)
-            : (aValue as number) - (bValue as number);
-        } else {
-          return sortOrder === "asc"
-            ? (aValue as string).localeCompare(bValue as string)
-            : (bValue as string).localeCompare(aValue as string);
-        }
-      }
-    );
-
-    return sorted;
-  }, [currentDisplayData, sortBy, sortOrder]);
-
   const getCurrentLevel = (): LocationLevel => {
     if (selectedSuburbId) return "suburb";
     if (selectedDistrictId) return "suburb";
@@ -728,6 +701,57 @@ export default function PropertyDashboard({
     }
     return "Unknown";
   };
+
+  const displayData = useMemo((): DatabaseLocationSnapshot[] => {
+    const sorted = [...currentDisplayData].sort(
+      (a: DatabaseLocationSnapshot, b: DatabaseLocationSnapshot) => {
+        let aValue: string | number, bValue: string | number;
+
+        if (sortBy === "listingCount") {
+          aValue = a.listingCount || 0;
+          bValue = b.listingCount || 0;
+        } else {
+          // FIX: Get the correct name property for sorting
+          if (currentLevel === "region") {
+            aValue = a.regionName || "";
+            bValue = b.regionName || "";
+          } else if (currentLevel === "district") {
+            aValue = a.districtName || "";
+            bValue = b.districtName || "";
+          } else if (currentLevel === "suburb") {
+            aValue = a.suburbName || "";
+            bValue = b.suburbName || "";
+          } else {
+            aValue = "";
+            bValue = "";
+          }
+        }
+
+        if (sortBy === "listingCount") {
+          return sortOrder === "desc"
+            ? (bValue as number) - (aValue as number)
+            : (aValue as number) - (bValue as number);
+        } else {
+          return sortOrder === "asc"
+            ? (aValue as string).localeCompare(bValue as string)
+            : (bValue as string).localeCompare(aValue as string);
+        }
+      }
+    );
+
+    return sorted;
+  }, [currentDisplayData, sortBy, sortOrder, currentLevel]); // Add currentLevel dependency
+
+  const filteredDisplayData = useMemo(() => {
+    if (!searchTerm.trim() || currentLevel !== "suburb") {
+      return displayData;
+    }
+
+    return displayData.filter((item) => {
+      const name = getCurrentLocationName(item).toLowerCase();
+      return name.includes(searchTerm.toLowerCase());
+    });
+  }, [displayData, searchTerm, currentLevel]);
 
   const getItemUrl = (item: DatabaseLocationSnapshot): string => {
     if (currentLevel === "region") {
@@ -878,8 +902,6 @@ export default function PropertyDashboard({
       <div className={styles["sketch-box"]}>
         <div className="p-4 sm:p-6 lg:p-10">
           <div className="mb-3 sm:mb-4 pb-2">
-            {" "}
-            {/* Changed from mb-6 sm:mb-8 */}
             <div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-gray-800 relative uppercase">
                 📊{" "}
@@ -1042,11 +1064,45 @@ export default function PropertyDashboard({
       {!selectedSuburbId && (
         <div className={styles["sketch-box"]}>
           <div className="p-6 border-b-2 border-gray-800">
-            <h3 className="text-2xl font-bold text-gray-800 relative">
-              📋 {levelName}s by Listings
-              {selectedRegionName && ` in ${selectedRegionName}`}
-              {selectedDistrictName && ` in ${selectedDistrictName}`}
-            </h3>
+            {/* Header with conditional search */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <h3 className="text-2xl font-bold text-gray-800 relative">
+                📋 {levelName}s by Listings
+                {selectedRegionName && ` in ${selectedRegionName}`}
+                {selectedDistrictName && ` in ${selectedDistrictName}`}
+              </h3>
+
+              {/* Search Box - Only for suburbs */}
+              {currentLevel === "suburb" && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search suburbs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="px-3 py-2 border-2 border-black font-bold uppercase text-sm focus:outline-none focus:shadow-[4px_4px_0px_#000] transition-all duration-200 bg-white w-full lg:w-64"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-black font-bold text-lg leading-none"
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Results count - Only show when searching suburbs */}
+            {currentLevel === "suburb" && searchTerm && (
+              <div className="text-sm text-gray-600 font-semibold mt-3 pt-3 border-t border-dashed border-gray-300">
+                Showing {filteredDisplayData.length} of {displayData.length}{" "}
+                suburbs
+                {searchTerm && ` matching "${searchTerm}"`}
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -1086,7 +1142,8 @@ export default function PropertyDashboard({
                 </tr>
               </thead>
               <tbody>
-                {displayData.map(
+                {filteredDisplayData.map(
+                  // ✅ Changed from displayData to filteredDisplayData
                   (item: DatabaseLocationSnapshot, index: number) => {
                     const name: string = getCurrentLocationName(item);
                     const isClickable =
@@ -1160,8 +1217,8 @@ export default function PropertyDashboard({
                               style={{
                                 color:
                                   trends.weekChange >= 0
-                                    ? "#13b99d" // ✅ Brutalist teal
-                                    : "#ff4910", // ✅ Brutalist orange
+                                    ? "#13b99d"
+                                    : "#ff4910",
                               }}
                             >
                               <span className="font-bold">
@@ -1249,36 +1306,29 @@ export default function PropertyDashboard({
           </div>
         </div>
       )}
+
       {/* About Modal */}
       {showAboutModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setShowAboutModal(false)}
         >
-          {/* Backdrop with blur and dim */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-
-          {/* Modal Content */}
           <div
             className="relative bg-white border-4 border-black shadow-[8px_8px_0px_#000] max-w-md w-full mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => setShowAboutModal(false)}
               className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center border-2 border-black hover:bg-black hover:text-white transition-all duration-200 font-bold"
             >
               ✕
             </button>
-
-            {/* Modal Header - CLEANED UP */}
             <div className="mb-4">
               <h3 className="text-2xl font-bold uppercase text-black border-b-2 border-dashed border-gray-300 pb-2">
                 🏠 ABOUT
               </h3>
             </div>
-
-            {/* Modal Content */}
             <div className="space-y-4 text-gray-700">
               <p className="font-semibold">
                 NZ Housing Stats tracks property market trends across New
@@ -1288,8 +1338,6 @@ export default function PropertyDashboard({
                 Data is updated daily and covers all regions, districts, and
                 suburbs with comprehensive market insights.
               </p>
-
-              {/* Beta Notice - User-Friendly */}
               <div className="bg-[#fe90e8] border-2 border-black p-3 -mx-2">
                 <p className="text-sm font-bold text-black mb-2">
                   🚧 BETA VERSION
@@ -1302,8 +1350,6 @@ export default function PropertyDashboard({
                 </p>
               </div>
             </div>
-
-            {/* Modal Footer */}
             <div className="mt-6 pt-4 border-t-2 border-dashed border-gray-300">
               <button
                 onClick={() => setShowAboutModal(false)}
