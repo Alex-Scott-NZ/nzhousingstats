@@ -1,4 +1,4 @@
-// src/app/components/StructuredData.tsx
+// src\app\components\StructuredData.tsx
 import { createSlug } from '../../lib/slugs';
 
 interface LocationStructuredDataProps {

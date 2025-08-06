@@ -1,4 +1,5 @@
 // src\app\[...location]\page.tsx
+// src\app\[...location]\page.tsx
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -93,6 +94,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const metadataStart = Date.now();
   const { location } = await params;
   const [regionSlug, districtSlug, suburbSlug] = location || [];
+  
+  // ✅ EARLY RETURN: Filter out Next.js static assets
+  if (location && location.length > 0) {
+    const firstSegment = location[0];
+    if (firstSegment === '_next' || 
+        firstSegment.includes('.css') || 
+        firstSegment.includes('.js') || 
+        firstSegment.includes('.map') ||
+        firstSegment.includes('.ico') ||
+        firstSegment.includes('.png') ||
+        firstSegment.includes('.jpg') ||
+        firstSegment.includes('.svg')) {
+      return { title: 'Not Found' };
+    }
+  }
   
   // Create cache key (same for metadata and page)
   const cacheKey = location?.join('/') || 'root';
@@ -263,6 +279,23 @@ export default async function LocationPage({ params }: Props) {
   const pageStart = Date.now();
   const { location } = await params;
   const [regionSlug, districtSlug, suburbSlug] = location || [];
+  
+  // ✅ EARLY RETURN: Filter out Next.js static assets
+  if (location && location.length > 0) {
+    const firstSegment = location[0];
+    
+    // Block Next.js static assets
+    if (firstSegment === '_next' || 
+        firstSegment.includes('.css') || 
+        firstSegment.includes('.js') || 
+        firstSegment.includes('.map') ||
+        firstSegment.includes('.ico') ||
+        firstSegment.includes('.png') ||
+        firstSegment.includes('.jpg') ||
+        firstSegment.includes('.svg')) {
+      notFound(); // Return 404 immediately without database queries
+    }
+  }
   
   const cacheKey = location?.join('/') || 'root';
   console.log(`🏠 Loading location page: ${cacheKey}`);
