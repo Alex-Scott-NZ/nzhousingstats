@@ -1284,8 +1284,8 @@ export default function PropertyDashboard({
                               style={{
                                 color:
                                   trends.weekChange >= 0
-                                    ? "#13b99d"
-                                    : "#ff4910",
+                                    ? "#04865D"
+                                    : "#dc2626",
                               }}
                             >
                               <span className="font-bold">
@@ -1310,7 +1310,7 @@ export default function PropertyDashboard({
                               style={{
                                 color:
                                   trends.monthChange >= 0
-                                    ? "#059669"
+                                    ? "#04865D"
                                     : "#dc2626",
                               }}
                             >

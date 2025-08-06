@@ -1,5 +1,7 @@
 /* src\app\components\PropertyDashboard.module.scss */
 
+@use "sass:color";
+
 /* ✅ Brutalist Color Palette */
 $yellow: #ffec00;
 $blue: #3300ff;
@@ -84,7 +86,8 @@ $magenta: #ff01f6;
   }
   
   &:hover {
-    color: darken($blue, 10%) !important; /* ✅ Darker blue on hover */
+    // ✅ FIXED: Replace darken() with color.scale()
+    color: color.scale($blue, $lightness: -20%) !important; /* ✅ Darker blue on hover */
     
     &::after {
       transform: scaleX(0);
@@ -103,7 +106,8 @@ $magenta: #ff01f6;
     z-index: 10;
     
     .clickable-location {
-      color: darken($blue, 10%) !important;
+      // ✅ FIXED: Replace darken() with color.scale()
+      color: color.scale($blue, $lightness: -20%) !important;
       
       &::after {
         transform: scaleX(0);
