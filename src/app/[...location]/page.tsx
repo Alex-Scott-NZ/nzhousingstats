@@ -1,5 +1,4 @@
 // src\app\[...location]\page.tsx
-// src\app\[...location]\page.tsx
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -352,7 +351,7 @@ export default async function LocationPage({ params }: Props) {
           suburb={suburb}
           listingCount={listingCount}
         />
-        <main className="max-w-7xl mx-auto py-6 px-4">
+        
           <Suspense fallback={<div>Loading...</div>}>
             <PropertyDashboard
               allData={fullData}
@@ -363,7 +362,7 @@ export default async function LocationPage({ params }: Props) {
               initialSuburbId={suburb?.suburbId}
             />
           </Suspense>
-        </main>
+        
       </div>
     );
   } catch (error) {

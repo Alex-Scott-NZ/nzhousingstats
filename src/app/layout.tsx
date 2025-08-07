@@ -1,6 +1,8 @@
 // src\app\layout.tsx
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { getTotalsByLocationType } from "../../lib/data-collection";
+import Header from "./components/Header";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -50,7 +52,6 @@ export const metadata: Metadata = {
       "msvalidate.01": "B0757AE5EBBFAF54E821655817F59B4E",
     },
   },
-  // ✅ Add house emoji favicon
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>",
     shortcut:
@@ -60,11 +61,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+async function getHeaderData() {
+  try {
+    const totals = await getTotalsByLocationType("HOUSES_TO_BUY");
+    return { lastUpdated: totals.lastUpdated };
+  } catch (error) {
+    console.error("Failed to load header data:", error);
+    return { lastUpdated: new Date().toISOString() };
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerData = await getHeaderData();
+
   return (
     <html lang="en-NZ">
       <head>
@@ -119,7 +132,12 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${spaceGrotesk.className} antialiased`}
       >
-        {children}
+        <div className="min-h-screen bg-[#fafafa] p-4 sm:p-6">
+          <div className="w-full max-w-7xl mx-auto space-y-3 sm:space-y-5">
+            <Header lastUpdated={headerData.lastUpdated} />
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   );

@@ -10,7 +10,7 @@ import {
 import PropertyDashboard from "./components/PropertyDashboard";
 import HomepageStructuredData from "./components/StructuredData";
 
-export const revalidate = 300; 
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "NZ Housing Stats - New Zealand Property Market Data & Trends",
@@ -51,7 +51,7 @@ export default async function HomePage() {
   try {
     // Time each major data fetch
     const dataStart = Date.now();
-    
+
     const housesToBuyStart = Date.now();
     const housesToBuyData = await Promise.all([
       getTotalsByLocationType("HOUSES_TO_BUY"),
@@ -126,15 +126,14 @@ export default async function HomePage() {
             new Date().toISOString()
           }
         />
-        <main className="max-w-7xl mx-auto py-6 px-4">
-          <Suspense fallback={<div>Loading...</div>}>
-            <PropertyDashboard
-              allData={allData}
-              snapshots={snapshots}
-              historicalData={historicalData}
-            />
-          </Suspense>
-        </main>
+
+        <Suspense fallback={<div>Loading...</div>}>
+          <PropertyDashboard
+            allData={allData}
+            snapshots={snapshots}
+            historicalData={historicalData}
+          />
+        </Suspense>
       </div>
     );
   } catch (error) {
