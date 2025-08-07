@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 import cron from 'node-cron';
-import { collectPropertyData } from '../lib/data-collection.js';
+import { collectPropertyData } from '../lib/data-collection.ts';
 
 console.log('🏠 NZ Housing Stats Data Collection Service Starting...');
 console.log(`⏰ Will collect data at 5:00 PM daily (NZ time)`); // ✅ Updated message
