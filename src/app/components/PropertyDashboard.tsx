@@ -1,12 +1,16 @@
 // src\app\components\PropertyDashboard.tsx
 "use client";
 
-import { useState, useMemo, useEffect, useLayoutEffect } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -96,6 +100,139 @@ interface ChartDataPoint {
   date: string;
   listings: number;
 }
+
+// Custom hook for persistent chart settings
+const usePersistedChartSettings = () => {
+  const [chartType, setChartTypeState] = useState<
+    "line" | "bar" | "area" | "gradient"
+  >("line");
+  const [visualStyle, setVisualStyleState] = useState<
+    "solid" | "dashed" | "dotted" | "thick"
+  >("solid");
+  const [dotStyle, setDotStyleState] = useState<
+    "circle" | "square" | "star" | "none"
+  >("circle");
+  const [loaded, setLoaded] = useState(false);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = localStorage.getItem("property-chart-settings");
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          setChartTypeState(parsed.chartType || "line");
+          setVisualStyleState(parsed.visualStyle || "solid");
+          setDotStyleState(parsed.dotStyle || "circle");
+        } catch (error) {
+          console.log("Failed to parse chart settings:", error);
+        }
+      }
+      setLoaded(true);
+    }
+  }, []);
+
+  // Save to localStorage whenever settings change
+  const setChartType = useCallback(
+    (value: "line" | "bar" | "area" | "gradient") => {
+      setChartTypeState(value);
+      if (typeof window !== "undefined") {
+        const currentSettings = JSON.parse(
+          localStorage.getItem("property-chart-settings") || "{}"
+        );
+        localStorage.setItem(
+          "property-chart-settings",
+          JSON.stringify({
+            ...currentSettings,
+            chartType: value,
+          })
+        );
+      }
+    },
+    []
+  );
+
+  const setVisualStyle = useCallback(
+    (value: "solid" | "dashed" | "dotted" | "thick") => {
+      setVisualStyleState(value);
+      if (typeof window !== "undefined") {
+        const currentSettings = JSON.parse(
+          localStorage.getItem("property-chart-settings") || "{}"
+        );
+        localStorage.setItem(
+          "property-chart-settings",
+          JSON.stringify({
+            ...currentSettings,
+            visualStyle: value,
+          })
+        );
+      }
+    },
+    []
+  );
+
+  const setDotStyle = useCallback(
+    (value: "circle" | "square" | "star" | "none") => {
+      setDotStyleState(value);
+      if (typeof window !== "undefined") {
+        const currentSettings = JSON.parse(
+          localStorage.getItem("property-chart-settings") || "{}"
+        );
+        localStorage.setItem(
+          "property-chart-settings",
+          JSON.stringify({
+            ...currentSettings,
+            dotStyle: value,
+          })
+        );
+      }
+    },
+    []
+  );
+
+  return {
+    chartType,
+    visualStyle,
+    dotStyle,
+    setChartType,
+    setVisualStyle,
+    setDotStyle,
+    loaded,
+  };
+};
+
+// Add these components near the top of your file, after your interfaces:
+
+const CustomSquareDot = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <rect
+      x={cx - 3}
+      y={cy - 3}
+      width="6"
+      height="6"
+      fill="#333"
+      stroke="#333"
+      strokeWidth="1"
+    />
+  );
+};
+
+const CustomStarDot = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <text
+      x={cx}
+      y={cy}
+      textAnchor="middle"
+      dy="0.3em"
+      fontSize="10"
+      fill="#333"
+    >
+      ★
+    </text>
+  );
+};
 
 type SortColumn = "name" | "listingCount" | "weekChange" | "monthChange";
 type SortOrder = "asc" | "desc";
@@ -189,6 +326,15 @@ export default function PropertyDashboard({
   const [sortBy, setSortBy] = useState<SortColumn>("listingCount");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [searchTerm, setSearchTerm] = useState("");
+  const {
+    chartType,
+    visualStyle,
+    dotStyle,
+    setChartType,
+    setVisualStyle,
+    setDotStyle,
+    loaded: chartSettingsLoaded,
+  } = usePersistedChartSettings();
 
   const currentListingData: ListingTypeData = allData[LISTING_TYPE];
   const totals: TotalsData | null = currentListingData?.totals;
@@ -990,12 +1136,71 @@ export default function PropertyDashboard({
 
           {/* Chart Container */}
           <div className="bg-white border-2 border-gray-800 p-3 sm:p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
-            <div className="absolute -top-4 left-3 sm:left-5 bg-[#7dfaff] px-2 font-bold border-2 border-gray-800 text-black uppercase text-sm sm:text-base">
-              {selectedSuburbName ||
-                selectedDistrictName ||
-                selectedRegionName ||
-                "New Zealand"}{" "}
-              CHART 📈
+            <div className="flex items-center justify-between mb-4">
+              <div className="absolute -top-4 left-3 sm:left-5 bg-[#7dfaff] px-2 font-bold border-2 border-gray-800 text-black uppercase text-sm sm:text-base">
+                {selectedSuburbName ||
+                  selectedDistrictName ||
+                  selectedRegionName ||
+                  "New Zealand"}{" "}
+                CHART 📈
+              </div>
+
+              {/* Chart Configuration Controls */}
+              {trendData.length > 1 && (
+                <div className="absolute -top-4 right-3 sm:right-5 flex gap-1">
+                  {/* Chart Type Dropdown */}
+                  <select
+                    value={chartType}
+                    onChange={(e) =>
+                      setChartType(
+                        e.target.value as "line" | "bar" | "area" | "gradient"
+                      )
+                    }
+                    className="bg-[#13b99d] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#0fa085] transition-colors cursor-pointer"
+                  >
+                    <option value="line">📈 LINE</option>
+                    <option value="bar">📊 BAR</option>
+                    <option value="area">🌊 AREA</option>
+                    <option value="gradient">🌈 GRADIENT</option>
+                  </select>
+
+                  {/* Visual Style Dropdown */}
+                  <select
+                    value={visualStyle}
+                    onChange={(e) =>
+                      setVisualStyle(
+                        e.target.value as
+                          | "solid"
+                          | "dashed"
+                          | "dotted"
+                          | "thick"
+                      )
+                    }
+                    className="bg-[#fe90e8] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#fe7ee0] transition-colors cursor-pointer"
+                  >
+                    <option value="solid">━━ SOLID</option>
+                    <option value="dashed">- - DASH</option>
+                    <option value="dotted">⋯⋯ DOT</option>
+                    <option value="thick">━━ THICK</option>
+                  </select>
+
+                  {/* Dot Style Dropdown */}
+                  <select
+                    value={dotStyle}
+                    onChange={(e) =>
+                      setDotStyle(
+                        e.target.value as "circle" | "square" | "star" | "none"
+                      )
+                    }
+                    className="bg-[#ffeb3b] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#fdd835] transition-colors cursor-pointer"
+                  >
+                    <option value="circle">⚫ DOTS</option>
+                    <option value="square">⬛ SQUARE</option>
+                    <option value="star">⭐ STAR</option>
+                    <option value="none">⚪ NONE</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {trendData.length > 1 && (
@@ -1016,48 +1221,252 @@ export default function PropertyDashboard({
 
             {trendData.length > 1 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart
-                  data={trendData}
-                  margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "#666" }}
-                    tickFormatter={(value) => value.toUpperCase()}
-                  />
-                  <YAxis
-                    domain={chartYAxisDomain}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#666" }}
-                    width={35}
-                    tickFormatter={(value) => value.toLocaleString()}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => [
-                      value.toLocaleString(),
-                      "LISTINGS",
-                    ]}
-                    labelStyle={{ color: "#333" }}
-                    contentStyle={{
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      border: "2px solid #333",
-                      borderRadius: "0px",
-                      fontSize: "14px",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="listings"
-                    stroke="#333"
-                    strokeWidth={3}
-                    dot={{ fill: "#333", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
-                  />
-                </LineChart>
+                {/* Chart Type Rendering */}
+                {chartType === "line" ? (
+                  <LineChart
+                    data={trendData}
+                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#666" }}
+                      tickFormatter={(value) => value.toUpperCase()}
+                    />
+                    <YAxis
+                      domain={chartYAxisDomain}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#666" }}
+                      width={35}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        value.toLocaleString(),
+                        "LISTINGS",
+                      ]}
+                      labelStyle={{ color: "#333" }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        border: "2px solid #333",
+                        borderRadius: "0px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="listings"
+                      stroke="#333"
+                      strokeWidth={
+                        visualStyle === "thick"
+                          ? 5
+                          : visualStyle === "dotted" || visualStyle === "dashed"
+                          ? 2
+                          : 3
+                      }
+                      strokeDasharray={
+                        visualStyle === "dashed"
+                          ? "8 4"
+                          : visualStyle === "dotted"
+                          ? "2 2"
+                          : undefined
+                      }
+                      dot={
+                        dotStyle === "none" ? (
+                          false
+                        ) : dotStyle === "square" ? (
+                          <CustomSquareDot />
+                        ) : dotStyle === "star" ? (
+                          <CustomStarDot />
+                        ) : (
+                          { fill: "#333", strokeWidth: 2, r: 4 }
+                        )
+                      }
+                      activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                ) : chartType === "bar" ? (
+                  <BarChart
+                    data={trendData}
+                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#666" }}
+                      tickFormatter={(value) => value.toUpperCase()}
+                    />
+                    <YAxis
+                      domain={chartYAxisDomain}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#666" }}
+                      width={35}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        value.toLocaleString(),
+                        "LISTINGS",
+                      ]}
+                      labelStyle={{ color: "#333" }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        border: "2px solid #333",
+                        borderRadius: "0px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <Bar
+                      dataKey="listings"
+                      fill={visualStyle === "thick" ? "#13b99d" : "#333"}
+                      stroke="#000"
+                      strokeWidth={visualStyle === "thick" ? 2 : 1}
+                      strokeDasharray={
+                        visualStyle === "dashed"
+                          ? "4 2"
+                          : visualStyle === "dotted"
+                          ? "1 1"
+                          : undefined
+                      }
+                    />
+                  </BarChart>
+                ) : chartType === "area" ? (
+                  <AreaChart
+                    data={trendData}
+                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#666" }}
+                      tickFormatter={(value) => value.toUpperCase()}
+                    />
+                    <YAxis
+                      domain={chartYAxisDomain}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#666" }}
+                      width={35}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        value.toLocaleString(),
+                        "LISTINGS",
+                      ]}
+                      labelStyle={{ color: "#333" }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        border: "2px solid #333",
+                        borderRadius: "0px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="listings"
+                      stroke="#333"
+                      strokeWidth={visualStyle === "thick" ? 4 : 2}
+                      strokeDasharray={
+                        visualStyle === "dashed"
+                          ? "8 4"
+                          : visualStyle === "dotted"
+                          ? "2 2"
+                          : undefined
+                      }
+                      fill="#333"
+                      fillOpacity={0.3}
+                      dot={
+                        dotStyle === "none"
+                          ? false
+                          : { fill: "#333", strokeWidth: 2, r: 3 }
+                      }
+                    />
+                  </AreaChart>
+                ) : (
+                  // Gradient Area Chart
+                  <AreaChart
+                    data={trendData}
+                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="colorGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#13b99d"
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#13b99d"
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#666" }}
+                      tickFormatter={(value) => value.toUpperCase()}
+                    />
+                    <YAxis
+                      domain={chartYAxisDomain}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#666" }}
+                      width={35}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        value.toLocaleString(),
+                        "LISTINGS",
+                      ]}
+                      labelStyle={{ color: "#333" }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        border: "2px solid #333",
+                        borderRadius: "0px",
+                        fontSize: "14px",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="listings"
+                      stroke="#13b99d"
+                      strokeWidth={visualStyle === "thick" ? 4 : 3}
+                      strokeDasharray={
+                        visualStyle === "dashed"
+                          ? "8 4"
+                          : visualStyle === "dotted"
+                          ? "2 2"
+                          : undefined
+                      }
+                      fill="url(#colorGradient)"
+                      dot={
+                        dotStyle === "none"
+                          ? false
+                          : { fill: "#13b99d", strokeWidth: 2, r: 4 }
+                      }
+                    />
+                  </AreaChart>
+                )}
               </ResponsiveContainer>
             ) : selectedSuburbId ? (
               <NoTrendDataMessage
