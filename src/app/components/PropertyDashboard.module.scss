@@ -21,24 +21,29 @@ $magenta: #ff01f6;
 }
 
 /* ✅ Keep the highlight clean and simple */
+// .yellow-highlight {
+//   position: relative;
+//   display: inline-block; // This is key - keeps it only as wide as content
+//   z-index: 1;
+// }
+
 .yellow-highlight {
   position: relative;
-  display: inline-block;
+  display: inline;
   z-index: 1;
-}
-
-.yellow-highlight::before {
-  content: '';
-  position: absolute;
-  top: 60%;
-  left: -8px;
-  right: -12px;
-  height: 50px;
+  
+  // This creates separate highlights for each line
   background: $yellow;
-  transform: translateY(-50%) rotate(-1deg);
-  z-index: -1;
+  padding: 2px 8px;
+  margin: 0 -8px;
   opacity: 0.8;
   border-radius: 3px;
+  
+  // This is crucial for multi-line highlighting
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  
+  // Remove transform from here as it can interfere with line breaking
 }
 
 /* ✅ Brutalist status dot */

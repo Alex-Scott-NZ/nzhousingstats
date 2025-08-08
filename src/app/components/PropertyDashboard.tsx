@@ -875,7 +875,7 @@ export default function PropertyDashboard({
     <>
       {/* Breadcrumb */}
       <div className={styles["sketch-box"]}>
-        <div className="p-4 sm:p-5 pb-3 sm:pb-4 text-sm sm:text-base bg-[#fe90e8]">
+        <div className="p-3 pl-2 sm:p-3 pb-3 sm:pb-3 text-sm sm:text-base bg-[#fe90e8]">
           <Link
             href="/"
             className="font-bold px-2 py-1 border-2 border-[#fe90e8] hover:border-black hover:bg-black hover:text-[#fe90e8] text-black uppercase transition-all duration-200"

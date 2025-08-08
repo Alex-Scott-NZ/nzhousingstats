@@ -25,11 +25,11 @@ export default function Header({ lastUpdated }: HeaderProps) {
   // Date formatting function with hydration protection
   const formatDate = (dateString: string) => {
     if (!mounted) {
-      // Return a static fallback during SSR
-      return new Date(dateString).toISOString().split("T")[0]; // Simple YYYY-MM-DD format
+      // Don't show anything during SSR
+      return "";
     }
 
-    // Client-side formatting
+    // Client-side formatting only
     return new Date(dateString).toLocaleString("en-NZ", {
       year: "numeric",
       month: "short",
@@ -44,12 +44,16 @@ export default function Header({ lastUpdated }: HeaderProps) {
       {/* Header */}
       <div className={styles["sketch-box"]}>
         <div className="p-4 sm:p-6 pb-3 sm:pb-4">
-          <h1
-            className={`text-xl sm:text-2xl lg:text-3xl font-bold text-left text-gray-800 ${styles["yellow-highlight"]} relative uppercase`}
-          >
+          <h1 className="text-2xl sm:text-3xl font-bold text-left text-gray-800 relative uppercase">
             <Link href="/" className="block w-full">
-              <span className={styles["house-icon"]}>🏠</span>
-              PROPERTY LISTINGS TRACKER
+              <div className="flex items-center">
+                <span className={styles["house-icon"]}>🏠</span>
+                <div className="mt-1">
+                  <span className={styles["yellow-highlight"]}>
+                    PROPERTY LISTINGS TRACKER
+                  </span>
+                </div>
+              </div>
             </Link>
           </h1>
         </div>
