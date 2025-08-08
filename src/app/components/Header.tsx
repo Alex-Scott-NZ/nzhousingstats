@@ -62,7 +62,7 @@ export default function Header({ lastUpdated }: HeaderProps) {
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 border-2 border-black rounded-full animate-pulse"></div>
               <span className="font-semibold uppercase tracking-wide">
-                LAST UPDATED:{" "}
+                UPDATED:{" "}
                 <span className="font-bold text-gray-700">
                   {lastUpdated ? formatDate(lastUpdated) : "Loading..."}
                 </span>
