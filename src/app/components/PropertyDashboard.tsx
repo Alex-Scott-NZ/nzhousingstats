@@ -1082,70 +1082,18 @@ export default function PropertyDashboard({
 
           {/* Chart Container */}
           <div className="bg-white border-2 border-gray-800 p-3 sm:p-5 relative shadow-[inset_2px_2px_0px_#f0f0f0]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="absolute -top-4 left-3 sm:left-5 bg-[#7dfaff] px-2 font-bold border-2 border-gray-800 text-black uppercase text-sm sm:text-base">
-                {selectedSuburbName ||
-                  selectedDistrictName ||
-                  selectedRegionName ||
-                  "New Zealand"}{" "}
-                CHART 📈
-              </div>
-              {/* Chart Configuration Controls */}
-              {trendData.length > 1 && (
-                <div className="absolute -top-4 right-3 sm:right-5 flex gap-1">
-                  {/* Chart Type Dropdown */}
-                  <select
-                    value={chartType}
-                    onChange={(e) =>
-                      setChartType(
-                        e.target.value as "line" | "bar" | "area" | "gradient"
-                      )
-                    }
-                    className="bg-[#13b99d] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#0fa085] transition-colors cursor-pointer"
-                  >
-                    <option value="bar">📊 BAR</option>
-                    <option value="line">📈 LINE</option>
-                    <option value="area">🌊 AREA</option>
-                    <option value="gradient">🌈 GRADIENT</option>
-                  </select>
-
-                  {/* Visual Style Dropdown */}
-                  <select
-                    value={visualStyle}
-                    onChange={(e) =>
-                      setVisualStyle(
-                        e.target.value as
-                          | "solid"
-                          | "dashed"
-                          | "dotted"
-                          | "thick"
-                      )
-                    }
-                    className="bg-[#fe90e8] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#fe7ee0] transition-colors cursor-pointer"
-                  >
-                    <option value="thick">━━ THICK</option>
-                    <option value="solid">━━ SOLID</option>
-                    <option value="dashed">- - DASH</option>
-                    <option value="dotted">⋯⋯ DOT</option>
-                  </select>
-
-                  {/* Optional Reset Button */}
-                  <button
-                    onClick={() => {
-                      setChartType("bar");
-                      setVisualStyle("thick");
-                    }}
-                    className="bg-[#ff4910] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#e63e0a] transition-colors cursor-pointer"
-                    title="Reset to defaults"
-                  >
-                    🔄
-                  </button>
-                </div>
-              )}
+            {/* Chart Header - Clean and Simple */}
+            <div className="absolute -top-4 left-3 sm:left-5 bg-[#7dfaff] px-2 font-bold border-2 border-gray-800 text-black uppercase text-sm sm:text-base">
+              {selectedSuburbName ||
+                selectedDistrictName ||
+                selectedRegionName ||
+                "New Zealand"}{" "}
+              CHART 📈
             </div>
 
+            {/* Chart Range Info */}
             {trendData.length > 1 && (
-              <div className="mb-4 text-center">
+              <div className="mb-4 text-center pt-4">
                 <div className="text-xs text-gray-600 font-semibold uppercase">
                   RANGE:{" "}
                   {Math.min(
@@ -1160,237 +1108,303 @@ export default function PropertyDashboard({
               </div>
             )}
 
+            {/* Chart Rendering */}
             {trendData.length > 1 && mounted && chartSettingsLoaded ? (
-              <ResponsiveContainer width="100%" height={250}>
-                {/* Chart Type Rendering */}
-                {chartType === "line" ? (
-                  <LineChart
-                    data={trendData}
-                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#666" }}
-                      tickFormatter={(value) => value.toUpperCase()}
-                    />
-                    <YAxis
-                      domain={chartYAxisDomain}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#666" }}
-                      width={35}
-                      tickFormatter={(value) => value.toLocaleString()}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        value.toLocaleString(),
-                        "LISTINGS",
-                      ]}
-                      labelStyle={{ color: "#333" }}
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "2px solid #333",
-                        borderRadius: "0px",
-                        fontSize: "14px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="listings"
-                      stroke="#333"
-                      strokeWidth={
-                        visualStyle === "thick"
-                          ? 5
-                          : visualStyle === "dotted" || visualStyle === "dashed"
-                          ? 2
-                          : 3
-                      }
-                      strokeDasharray={
-                        visualStyle === "dashed"
-                          ? "8 4"
-                          : visualStyle === "dotted"
-                          ? "2 2"
-                          : undefined
-                      }
-                      dot={false} // No dots, cleaner look
-                      activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                ) : chartType === "bar" ? (
-                  <BarChart
-                    data={trendData}
-                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#666" }}
-                      tickFormatter={(value) => value.toUpperCase()}
-                    />
-                    <YAxis
-                      domain={chartYAxisDomain}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#666" }}
-                      width={35}
-                      tickFormatter={(value) => value.toLocaleString()}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        value.toLocaleString(),
-                        "LISTINGS",
-                      ]}
-                      labelStyle={{ color: "#333" }}
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "2px solid #333",
-                        borderRadius: "0px",
-                        fontSize: "14px",
-                      }}
-                    />
-                    <Bar
-                      dataKey="listings"
-                      fill={visualStyle === "thick" ? "#13b99d" : "#333"}
-                      stroke="#000"
-                      strokeWidth={visualStyle === "thick" ? 2 : 1}
-                      strokeDasharray={
-                        visualStyle === "dashed"
-                          ? "4 2"
-                          : visualStyle === "dotted"
-                          ? "1 1"
-                          : undefined
-                      }
-                    />
-                  </BarChart>
-                ) : chartType === "area" ? (
-                  <AreaChart
-                    data={trendData}
-                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#666" }}
-                      tickFormatter={(value) => value.toUpperCase()}
-                    />
-                    <YAxis
-                      domain={chartYAxisDomain}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#666" }}
-                      width={35}
-                      tickFormatter={(value) => value.toLocaleString()}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        value.toLocaleString(),
-                        "LISTINGS",
-                      ]}
-                      labelStyle={{ color: "#333" }}
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "2px solid #333",
-                        borderRadius: "0px",
-                        fontSize: "14px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="listings"
-                      stroke="#333"
-                      strokeWidth={visualStyle === "thick" ? 4 : 2}
-                      strokeDasharray={
-                        visualStyle === "dashed"
-                          ? "8 4"
-                          : visualStyle === "dotted"
-                          ? "2 2"
-                          : undefined
-                      }
-                      fill="#333"
-                      fillOpacity={0.3}
-                      dot={false} // No dots
-                    />
-                  </AreaChart>
-                ) : (
-                  // Gradient Area Chart
-                  <AreaChart
-                    data={trendData}
-                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="colorGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
+              <>
+                <ResponsiveContainer width="100%" height={250}>
+                  {/* ... all your existing chart code stays the same ... */}
+                  {chartType === "line" ? (
+                    <LineChart
+                      data={trendData}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#666" }}
+                        tickFormatter={(value) => value.toUpperCase()}
+                      />
+                      <YAxis
+                        domain={chartYAxisDomain}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#666" }}
+                        width={35}
+                        tickFormatter={(value) => value.toLocaleString()}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          value.toLocaleString(),
+                          "LISTINGS",
+                        ]}
+                        labelStyle={{ color: "#333" }}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "2px solid #333",
+                          borderRadius: "0px",
+                          fontSize: "14px",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="listings"
+                        stroke="#333"
+                        strokeWidth={
+                          visualStyle === "thick"
+                            ? 5
+                            : visualStyle === "dotted" ||
+                              visualStyle === "dashed"
+                            ? 2
+                            : 3
+                        }
+                        strokeDasharray={
+                          visualStyle === "dashed"
+                            ? "8 4"
+                            : visualStyle === "dotted"
+                            ? "2 2"
+                            : undefined
+                        }
+                        dot={false}
+                        activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  ) : chartType === "bar" ? (
+                    <BarChart
+                      data={trendData}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#666" }}
+                        tickFormatter={(value) => value.toUpperCase()}
+                      />
+                      <YAxis
+                        domain={chartYAxisDomain}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#666" }}
+                        width={35}
+                        tickFormatter={(value) => value.toLocaleString()}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          value.toLocaleString(),
+                          "LISTINGS",
+                        ]}
+                        labelStyle={{ color: "#333" }}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "2px solid #333",
+                          borderRadius: "0px",
+                          fontSize: "14px",
+                        }}
+                      />
+                      <Bar
+                        dataKey="listings"
+                        fill={visualStyle === "thick" ? "#13b99d" : "#333"}
+                        stroke="#000"
+                        strokeWidth={visualStyle === "thick" ? 2 : 1}
+                        strokeDasharray={
+                          visualStyle === "dashed"
+                            ? "4 2"
+                            : visualStyle === "dotted"
+                            ? "1 1"
+                            : undefined
+                        }
+                      />
+                    </BarChart>
+                  ) : chartType === "area" ? (
+                    <AreaChart
+                      data={trendData}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#666" }}
+                        tickFormatter={(value) => value.toUpperCase()}
+                      />
+                      <YAxis
+                        domain={chartYAxisDomain}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#666" }}
+                        width={35}
+                        tickFormatter={(value) => value.toLocaleString()}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          value.toLocaleString(),
+                          "LISTINGS",
+                        ]}
+                        labelStyle={{ color: "#333" }}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "2px solid #333",
+                          borderRadius: "0px",
+                          fontSize: "14px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="listings"
+                        stroke="#333"
+                        strokeWidth={visualStyle === "thick" ? 4 : 2}
+                        strokeDasharray={
+                          visualStyle === "dashed"
+                            ? "8 4"
+                            : visualStyle === "dotted"
+                            ? "2 2"
+                            : undefined
+                        }
+                        fill="#333"
+                        fillOpacity={0.3}
+                        dot={false}
+                      />
+                    </AreaChart>
+                  ) : (
+                    <AreaChart
+                      data={trendData}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#13b99d"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#13b99d"
+                            stopOpacity={0.1}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#666" }}
+                        tickFormatter={(value) => value.toUpperCase()}
+                      />
+                      <YAxis
+                        domain={chartYAxisDomain}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#666" }}
+                        width={35}
+                        tickFormatter={(value) => value.toLocaleString()}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          value.toLocaleString(),
+                          "LISTINGS",
+                        ]}
+                        labelStyle={{ color: "#333" }}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "2px solid #333",
+                          borderRadius: "0px",
+                          fontSize: "14px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="listings"
+                        stroke="#13b99d"
+                        strokeWidth={visualStyle === "thick" ? 4 : 3}
+                        strokeDasharray={
+                          visualStyle === "dashed"
+                            ? "8 4"
+                            : visualStyle === "dotted"
+                            ? "2 2"
+                            : undefined
+                        }
+                        fill="url(#colorGradient)"
+                        dot={false}
+                      />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
+
+                {/* Chart Controls - NOW AT THE BOTTOM! */}
+                <div className="mt-4 pt-4 border-t border-dashed border-gray-300">
+                  <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+                    <div className="text-xs font-bold uppercase text-gray-600 mb-2 sm:mb-0 sm:mr-3">
+                      CHART STYLE:
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {/* Chart Type Dropdown */}
+                      <select
+                        value={chartType}
+                        onChange={(e) =>
+                          setChartType(
+                            e.target.value as
+                              | "line"
+                              | "bar"
+                              | "area"
+                              | "gradient"
+                          )
+                        }
+                        className="bg-[#13b99d] px-3 py-2 font-bold border-2 border-gray-800 text-black uppercase text-sm focus:outline-none hover:bg-[#0fa085] transition-colors cursor-pointer"
                       >
-                        <stop
-                          offset="5%"
-                          stopColor="#13b99d"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#13b99d"
-                          stopOpacity={0.1}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#666" }}
-                      tickFormatter={(value) => value.toUpperCase()}
-                    />
-                    <YAxis
-                      domain={chartYAxisDomain}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#666" }}
-                      width={35}
-                      tickFormatter={(value) => value.toLocaleString()}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        value.toLocaleString(),
-                        "LISTINGS",
-                      ]}
-                      labelStyle={{ color: "#333" }}
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "2px solid #333",
-                        borderRadius: "0px",
-                        fontSize: "14px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="listings"
-                      stroke="#13b99d"
-                      strokeWidth={visualStyle === "thick" ? 4 : 3}
-                      strokeDasharray={
-                        visualStyle === "dashed"
-                          ? "8 4"
-                          : visualStyle === "dotted"
-                          ? "2 2"
-                          : undefined
-                      }
-                      fill="url(#colorGradient)"
-                      dot={false}
-                    />
-                  </AreaChart>
-                )}
-              </ResponsiveContainer>
+                        <option value="bar">📊 BAR</option>
+                        <option value="line">📈 LINE</option>
+                        <option value="area">🌊 AREA</option>
+                        <option value="gradient">🌈 GRADIENT</option>
+                      </select>
+
+                      {/* Visual Style Dropdown */}
+                      <select
+                        value={visualStyle}
+                        onChange={(e) =>
+                          setVisualStyle(
+                            e.target.value as
+                              | "solid"
+                              | "dashed"
+                              | "dotted"
+                              | "thick"
+                          )
+                        }
+                        className="bg-[#fe90e8] px-3 py-2 font-bold border-2 border-gray-800 text-black uppercase text-sm focus:outline-none hover:bg-[#fe7ee0] transition-colors cursor-pointer"
+                      >
+                        <option value="thick">━━ THICK</option>
+                        <option value="solid">━━ SOLID</option>
+                        <option value="dashed">- - DASH</option>
+                        <option value="dotted">⋯⋯ DOT</option>
+                      </select>
+
+                      {/* Reset Button */}
+                      <button
+                        onClick={() => {
+                          setChartType("bar");
+                          setVisualStyle("thick");
+                        }}
+                        className="bg-[#ff4910] px-3 py-2 font-bold border-2 border-gray-800 text-black uppercase text-sm focus:outline-none hover:bg-[#e63e0a] transition-colors cursor-pointer"
+                        title="Reset to defaults"
+                      >
+                        🔄 RESET
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : selectedSuburbId ? (
               <NoTrendDataMessage
                 level="suburb"
