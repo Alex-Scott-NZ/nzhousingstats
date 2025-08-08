@@ -1,7 +1,13 @@
 // src\app\components\PropertyDashboard.tsx
 "use client";
 
-import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -105,13 +111,10 @@ interface ChartDataPoint {
 const usePersistedChartSettings = () => {
   const [chartType, setChartTypeState] = useState<
     "line" | "bar" | "area" | "gradient"
-  >("line");
+  >("bar"); // Default to bar
   const [visualStyle, setVisualStyleState] = useState<
     "solid" | "dashed" | "dotted" | "thick"
-  >("solid");
-  const [dotStyle, setDotStyleState] = useState<
-    "circle" | "square" | "star" | "none"
-  >("circle");
+  >("thick"); // Default to thick
   const [loaded, setLoaded] = useState(false);
 
   // Load settings from localStorage on mount
@@ -121,9 +124,8 @@ const usePersistedChartSettings = () => {
       if (savedSettings) {
         try {
           const parsed = JSON.parse(savedSettings);
-          setChartTypeState(parsed.chartType || "line");
-          setVisualStyleState(parsed.visualStyle || "solid");
-          setDotStyleState(parsed.dotStyle || "circle");
+          setChartTypeState(parsed.chartType || "bar");
+          setVisualStyleState(parsed.visualStyle || "thick");
         } catch (error) {
           console.log("Failed to parse chart settings:", error);
         }
@@ -171,67 +173,13 @@ const usePersistedChartSettings = () => {
     []
   );
 
-  const setDotStyle = useCallback(
-    (value: "circle" | "square" | "star" | "none") => {
-      setDotStyleState(value);
-      if (typeof window !== "undefined") {
-        const currentSettings = JSON.parse(
-          localStorage.getItem("property-chart-settings") || "{}"
-        );
-        localStorage.setItem(
-          "property-chart-settings",
-          JSON.stringify({
-            ...currentSettings,
-            dotStyle: value,
-          })
-        );
-      }
-    },
-    []
-  );
-
   return {
     chartType,
     visualStyle,
-    dotStyle,
     setChartType,
     setVisualStyle,
-    setDotStyle,
     loaded,
   };
-};
-
-// Add these components near the top of your file, after your interfaces:
-
-const CustomSquareDot = (props: any) => {
-  const { cx, cy } = props;
-  return (
-    <rect
-      x={cx - 3}
-      y={cy - 3}
-      width="6"
-      height="6"
-      fill="#333"
-      stroke="#333"
-      strokeWidth="1"
-    />
-  );
-};
-
-const CustomStarDot = (props: any) => {
-  const { cx, cy } = props;
-  return (
-    <text
-      x={cx}
-      y={cy}
-      textAnchor="middle"
-      dy="0.3em"
-      fontSize="10"
-      fill="#333"
-    >
-      ★
-    </text>
-  );
 };
 
 type SortColumn = "name" | "listingCount" | "weekChange" | "monthChange";
@@ -329,10 +277,8 @@ export default function PropertyDashboard({
   const {
     chartType,
     visualStyle,
-    dotStyle,
     setChartType,
     setVisualStyle,
-    setDotStyle,
     loaded: chartSettingsLoaded,
   } = usePersistedChartSettings();
 
@@ -1144,7 +1090,6 @@ export default function PropertyDashboard({
                   "New Zealand"}{" "}
                 CHART 📈
               </div>
-
               {/* Chart Configuration Controls */}
               {trendData.length > 1 && (
                 <div className="absolute -top-4 right-3 sm:right-5 flex gap-1">
@@ -1158,8 +1103,8 @@ export default function PropertyDashboard({
                     }
                     className="bg-[#13b99d] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#0fa085] transition-colors cursor-pointer"
                   >
-                    <option value="line">📈 LINE</option>
                     <option value="bar">📊 BAR</option>
+                    <option value="line">📈 LINE</option>
                     <option value="area">🌊 AREA</option>
                     <option value="gradient">🌈 GRADIENT</option>
                   </select>
@@ -1178,27 +1123,23 @@ export default function PropertyDashboard({
                     }
                     className="bg-[#fe90e8] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#fe7ee0] transition-colors cursor-pointer"
                   >
+                    <option value="thick">━━ THICK</option>
                     <option value="solid">━━ SOLID</option>
                     <option value="dashed">- - DASH</option>
                     <option value="dotted">⋯⋯ DOT</option>
-                    <option value="thick">━━ THICK</option>
                   </select>
 
-                  {/* Dot Style Dropdown */}
-                  <select
-                    value={dotStyle}
-                    onChange={(e) =>
-                      setDotStyle(
-                        e.target.value as "circle" | "square" | "star" | "none"
-                      )
-                    }
-                    className="bg-[#ffeb3b] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#fdd835] transition-colors cursor-pointer"
+                  {/* Optional Reset Button */}
+                  <button
+                    onClick={() => {
+                      setChartType("bar");
+                      setVisualStyle("thick");
+                    }}
+                    className="bg-[#ff4910] px-2 py-1 font-bold border-2 border-gray-800 text-black uppercase text-xs sm:text-sm focus:outline-none hover:bg-[#e63e0a] transition-colors cursor-pointer"
+                    title="Reset to defaults"
                   >
-                    <option value="circle">⚫ DOTS</option>
-                    <option value="square">⬛ SQUARE</option>
-                    <option value="star">⭐ STAR</option>
-                    <option value="none">⚪ NONE</option>
-                  </select>
+                    🔄
+                  </button>
                 </div>
               )}
             </div>
@@ -1219,7 +1160,7 @@ export default function PropertyDashboard({
               </div>
             )}
 
-            {trendData.length > 1 ? (
+            {trendData.length > 1 && mounted && chartSettingsLoaded ? (
               <ResponsiveContainer width="100%" height={250}>
                 {/* Chart Type Rendering */}
                 {chartType === "line" ? (
@@ -1274,17 +1215,7 @@ export default function PropertyDashboard({
                           ? "2 2"
                           : undefined
                       }
-                      dot={
-                        dotStyle === "none" ? (
-                          false
-                        ) : dotStyle === "square" ? (
-                          <CustomSquareDot />
-                        ) : dotStyle === "star" ? (
-                          <CustomStarDot />
-                        ) : (
-                          { fill: "#333", strokeWidth: 2, r: 4 }
-                        )
-                      }
+                      dot={false} // No dots, cleaner look
                       activeDot={{ r: 6, stroke: "#333", strokeWidth: 2 }}
                     />
                   </LineChart>
@@ -1384,11 +1315,7 @@ export default function PropertyDashboard({
                       }
                       fill="#333"
                       fillOpacity={0.3}
-                      dot={
-                        dotStyle === "none"
-                          ? false
-                          : { fill: "#333", strokeWidth: 2, r: 3 }
-                      }
+                      dot={false} // No dots
                     />
                   </AreaChart>
                 ) : (
@@ -1459,11 +1386,7 @@ export default function PropertyDashboard({
                           : undefined
                       }
                       fill="url(#colorGradient)"
-                      dot={
-                        dotStyle === "none"
-                          ? false
-                          : { fill: "#13b99d", strokeWidth: 2, r: 4 }
-                      }
+                      dot={false}
                     />
                   </AreaChart>
                 )}
